@@ -130,3 +130,4 @@ if __name__ == "__main__":
     print("Took", time.time() - s)
 
     print("Mista pocet", len(tree.xpath("//SkolaMistoVykonuCinnosti")))
+    print("Subjekty pocet", len(tree.xpath("//PravniSubjekt")))

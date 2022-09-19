@@ -15,8 +15,8 @@ def read_json(filepath):
 
     return None
 
-obj_info = read_json( os.path.join("data", "skoly.json") )
-obj_geo_loc = read_json( os.path.join("data", "geo_loc.json") )
+subjekty = read_json( os.path.join("data", "subjekty.json") )
+mista_loc = read_json( os.path.join("data", "mista_loc.json") )
 
 #### Flask ####
 app = Flask(__name__)
@@ -27,11 +27,11 @@ def index():
 
 @app.route("/api/geo/all")
 def api_geo_all():
-    return obj_geo_loc
+    return mista_loc
 
 @app.route("/api/info/all")
 def api_info_all():
-    return obj_info
+    return subjekty
 
 
 if __name__ == "__main__":
