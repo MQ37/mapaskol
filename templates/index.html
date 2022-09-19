@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+       integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+       crossorigin=""/>
+     <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+       integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+       crossorigin=""></script>
+
+        <style>
+            #map {
+                height: 800px;
+            }
+        </style>
+    </head>
+
+    <body>
+     <div id="map"></div>
+
+        <script>
+            var map = L.map('map');
+
+            // Set view add tileLayer
+            map.setView([50.0773301, 14.4269236], 8);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            const fillMap = async () => {
+                const info_response = await fetch('/api/info/all');
+                const obj_info = await info_response.json(); 
+
+                const geo_response = await fetch('/api/geo/all');
+                const obj_geo = await geo_response.json(); 
+                
+                Object.keys(obj_info).forEach( (key) => {
+                    // Subjekt
+                    let info = obj_info[key];
+                    let subjekt_mista = {};
+
+                    info["zarizeni"].forEach( (zarizeni) => {
+                        zarizeni["mista"].forEach( (misto) => {
+                            let id_mista = misto["id_mista"];
+                            let geo = obj_geo[id_mista];
+                            if (geo !== undefined) {
+                                let lat = geo.lat;
+                                let lon = geo.lon;
+                                if ([lat, lon] in subjekt_mista) {
+                                    subjekt_mista[[lat, lon]].push(`
+                                    ${info.nazev} (${info.ico})<br>
+                                    ${zarizeni.nazev} (${zarizeni.izo})<br>
+                                    ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${id_mista})
+                                    `);
+                                } else {
+                                    subjekt_mista[[lat, lon]] = [`
+                                    ${info.nazev} (${info.ico})<br>
+                                    ${zarizeni.nazev} (${zarizeni.izo})<br>
+                                    ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${id_mista})
+                                    `];
+                                }
+                                /*
+                                L.marker([lat, lon]).addTo(map).bindPopup(
+                                    `${info.nazev} (${info.ico})<br>
+                                    ${zarizeni.nazev} (${zarizeni.izo})<br>
+                                    ${misto.adr1}, ${misto.adr2}, ${misto.adr3}`
+                                );
+                                */
+                            }
+                        });
+                    });
+
+                    Object.keys(subjekt_mista).forEach( (lat_lon) => {
+                        let [lat, lon] = lat_lon.split(",");
+                        let info = subjekt_mista[lat_lon];
+                        L.marker([lat, lon]).addTo(map).bindPopup(info.join("<hr>"));
+                    });
+                });
+            }
+
+            fillMap();
+        </script>
+    </body>
+
+</html>

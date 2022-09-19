@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+
+data/*
+!data/geo_loc.json
+!data/skoly.json
