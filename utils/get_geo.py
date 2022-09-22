@@ -4,6 +4,7 @@ import requests
 import os
 import json
 import time
+import sys
 
 API_TOKEN = os.environ["API_TOKEN"]
 
@@ -69,35 +70,40 @@ def main(args):
     elif args.all:
         subjekty = get_subjekty_all(tree, n)
 
-    for subjekt in subjekty:
-        info = subjekt_info(subjekt)
+    try:
+        for subjekt in subjekty:
+            info = subjekt_info(subjekt)
 
-        for zarizeni in info.get("zarizeni", []):
-            for misto in zarizeni.get("mista", []):
-                id_mista = misto["id_mista"]
+            for zarizeni in info.get("zarizeni", []):
+                for misto in zarizeni.get("mista", []):
+                    id_mista = misto["id_mista"]
 
-                if id_mista in geo_obj:
-                    print("Skipping", id_mista)
-                    continue
-                elif id_mista in failed_geo:
-                    print("Skipping failed", id_mista)
-                    continue
+                    if id_mista in geo_obj:
+                        print("Skipping", id_mista)
+                        continue
+                    elif id_mista in failed_geo:
+                        print("Skipping failed", id_mista)
+                        continue
 
-                adr1 = misto["adr1"]
-                adr2 = misto["adr2"]
-                adr3 = misto["adr3"]
+                    adr1 = misto["adr1"]
+                    adr2 = misto["adr2"]
+                    adr3 = misto["adr3"]
 
-                adr = ",".join(filter(None, [adr1, adr2, adr3]))
+                    adr = ",".join(filter(None, [adr1, adr2, adr3]))
 
-                time.sleep(1)
-                geo_loc = geo_lookup(adr)
-                if not geo_loc:
-                    failed_geo.append(id_mista)
-                    print("Could not find skipping", id_mista)
-                    continue
-                print(id_mista, geo_loc)
+                    time.sleep(1)
+                    geo_loc = geo_lookup(adr)
+                    if not geo_loc:
+                        failed_geo.append(id_mista)
+                        print("Could not find skipping", id_mista)
+                        continue
+                    print(id_mista, geo_loc)
 
-                geo_obj[id_mista] = geo_loc
+                    geo_obj[id_mista] = geo_loc
+    except KeyboardInterrupt:
+        write_json(failed_geo_filepath, failed_geo)
+        write_json(geo_filepath, geo_obj)
+        sys.exit()
 
     write_json(failed_geo_filepath, failed_geo)
     write_json(geo_filepath, geo_obj)
