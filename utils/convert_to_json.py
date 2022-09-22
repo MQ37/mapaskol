@@ -25,7 +25,7 @@ def main(args):
 
         obj[ico] = info
 
-    write_json(json_filepath, obj, ensure_ascii)
+    write_json(json_filepath, obj, ensure_ascii=ensure_ascii)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

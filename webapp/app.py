@@ -1,22 +1,8 @@
 from flask import Flask, request
 from flask import render_template
-import json
-import os
+from flask import send_from_directory
+from data import SUBJEKTY, MISTA_LOC, MISTA_ICO, LOC_MISTA
 
-#### Load data ####
-def read_json(filepath):
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, "r") as f:
-                obj = json.load(f)
-            return obj
-        except Exception as e:
-            print("Error reading file %s - %s" % (filepath, e))
-
-    return None
-
-subjekty = read_json( os.path.join("data", "subjekty.json") )
-mista_loc = read_json( os.path.join("data", "mista_loc.json") )
 
 #### Flask ####
 app = Flask(__name__)
@@ -25,13 +11,29 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
+@app.route('/static/<path:path>')
+def send_report(path):
+    return send_from_directory('static', path)
+
 @app.route("/api/geo/all")
 def api_geo_all():
-    return mista_loc
+    return MISTA_LOC
+
+@app.route("/api/geo/view/<int:swlat>/<int:swlon>/<int:nelat>/<int:nelon>")
+def api_geo_view(swlat, swlon, nelat, nelon):
+    return "%s %s %s %s" % (swlat, swlon, nelat, nelon)
 
 @app.route("/api/info/all")
 def api_info_all():
-    return subjekty
+    return SUBJEKTY
+
+@app.route("/api/mapping/mistaico")
+def api_mapping_mistaico():
+    return MISTA_ICO
+
+@app.route("/api/mapping/locmista")
+def api_mapping_locmista():
+    return LOC_MISTA
 
 
 if __name__ == "__main__":
