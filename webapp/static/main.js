@@ -109,6 +109,7 @@ const clusterPoints = (lats, lons, n) => {
 
 
 const fillMap = (idsMista) => {
+    const clusterSize = 30;
     if (idsMista.length > 200) {
         let lats = [];
         let lons = [];
@@ -125,13 +126,17 @@ const fillMap = (idsMista) => {
 
 
         console.log(lats.length);
-        let [cLats, cLons] = clusterPoints(lats, lons, 30);
+        let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
         console.log(cLats.length);
 
         for (let i = 0; i < cLats.length; i++) {
             let lat = cLats[i];
             let lon = cLons[i];
-            L.marker([lat, lon]).addTo(map);
+            L.marker([lat, lon], {
+                icon: new L.DivIcon({
+                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
+                })
+            }).addTo(map);
         }
     } else {
         idsMista.forEach( (idMista) => {
