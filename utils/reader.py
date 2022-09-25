@@ -64,6 +64,13 @@ def subjekt_info(subjekt):
         "ico": ico,
         "nazev": nazev,
         "zarizeni": [],
+        "reditelstvi": {
+            "nazev": subjekt.xpath("./Reditelstvi/RedPlnyNazev")[0].text,
+            "okres": subjekt.xpath("./Reditelstvi/Okres")[0].text,
+            "adr1": subjekt.xpath("./Reditelstvi/RedAdresa1")[0].text,
+            "adr2": subjekt.xpath("./Reditelstvi/RedAdresa2")[0].text,
+            "adr3": subjekt.xpath("./Reditelstvi/RedAdresa3")[0].text,
+        },
     }
 
     for zarizeni in XPATH_ZARIZENI(subjekt):

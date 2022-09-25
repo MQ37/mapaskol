@@ -15,9 +15,11 @@ def read_json(filepath):
 
 SUBJEKTY_FILEPATH = os.path.join("data", "subjekty.json") 
 MISTA_LOC_FILEPATH = os.path.join("data", "mista_loc.json") 
+REDITELSTVI_LOC_FILEPATH = os.path.join("data", "reditelstvi_loc.json") 
 
 SUBJEKTY = read_json(SUBJEKTY_FILEPATH)
 MISTA_LOC = read_json(MISTA_LOC_FILEPATH)
+REDITELSTVI_LOC = read_json(REDITELSTVI_LOC_FILEPATH)
 MISTA_ICO = {}
 LOC_MISTA = {}
 

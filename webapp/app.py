@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flask import render_template
 from flask import send_from_directory
-from data import SUBJEKTY, MISTA_LOC, MISTA_ICO, LOC_MISTA
+from data import SUBJEKTY, MISTA_LOC, MISTA_ICO, LOC_MISTA, REDITELSTVI_LOC
 
 
 #### Flask ####
@@ -15,9 +15,13 @@ def index():
 def send_report(path):
     return send_from_directory('static', path)
 
-@app.route("/api/geo/all")
-def api_geo_all():
+@app.route("/api/geo/mista")
+def api_geo_mista():
     return MISTA_LOC
+
+@app.route("/api/geo/reditelstvi")
+def api_geo_reditelstvi():
+    return REDITELSTVI_LOC
 
 @app.route("/api/geo/view/<int:swlat>/<int:swlon>/<int:nelat>/<int:nelon>")
 def api_geo_view(swlat, swlon, nelat, nelon):

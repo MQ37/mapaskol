@@ -4,4 +4,5 @@ __pycache__/
 
 data/*
 !data/mista_loc.json
+!data/reditelstvi_loc.json
 !data/subjekty.json

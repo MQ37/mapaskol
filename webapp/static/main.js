@@ -1,7 +1,6 @@
 var map = L.map('map');
 var subjekty;
-var mistaLoc;
-var mistaIco = {};
+var reditelstviLoc;
 
 const callAPI = async (url) => {
     const response = await fetch(url);
@@ -12,25 +11,12 @@ const callAPI = async (url) => {
 
 const getData = () => {
     let infoJsonResp = callAPI("/api/info/all");
-    let geoJsonResp = callAPI("/api/geo/all");
+    let geoJsonResp = callAPI("/api/geo/reditelstvi");
     let promise = new Promise((resolve) => {
         infoJsonResp.then( (obj) => {
             subjekty = obj;
             geoJsonResp.then( (obj) => {
-                mistaLoc = obj;
-
-                Object.keys(subjekty).forEach( (ico) => {
-                    let obj = subjekty[ico];
-
-                    obj["zarizeni"].forEach( (zarizeni) => {
-                        zarizeni["mista"].forEach( (misto) => {
-                            let idMista = misto["id_mista"];
-                            mistaIco[idMista] = ico;
-                        });
-                    });
-
-                });
-
+                reditelstviLoc = obj;
 
                 resolve("done");
             });
@@ -123,31 +109,11 @@ const clusterPoints = (lats, lons, n) => {
 
 
 const fillMap = (idsMista) => {
-    /*
-    Object.keys(subjekty).forEach( (ico) => {
-        // Subjekt
-        let obj = subjekty[ico];
-
-        obj["zarizeni"].forEach( (zarizeni) => {
-            zarizeni["mista"].forEach( (misto) => {
-                let idMista = misto["id_mista"];
-                let geo = mistaLoc[idMista];
-                if (geo !== undefined) {
-                    let lat = geo.lat;
-                    let lon = geo.lon;
-
-                    lats.push(lat);
-                    lons.push(lon);
-                }
-            });
-        });
-    });
-    */
     if (idsMista.length > 200) {
         let lats = [];
         let lons = [];
         idsMista.forEach( (idMista) => {
-            let geo = mistaLoc[idMista];
+            let geo = reditelstviLoc[idMista];
             if (geo !== undefined) {
                 let lat = geo.lat;
                 let lon = geo.lon;
@@ -169,91 +135,18 @@ const fillMap = (idsMista) => {
         }
     } else {
         idsMista.forEach( (idMista) => {
-            /*
-            let geo = mistaLoc[idMista];
-            if (geo === undefined) {
-                return;
+            let geo = reditelstviLoc[idMista];
+            if (geo !== undefined) {
+                let lat = geo.lat;
+                let lon = geo.lon;
+                let subjekt = subjekty[idMista];
+                L.marker([lat, lon]).addTo(map).bindPopup(`
+                ${subjekt.nazev} (${subjekt.ico})<br>
+                ${subjekt.reditelstvi.nazev}
+                `);
             }
-            let lat = geo.lat;
-            let lon = geo.lon;
-            */
-
-            let ico = mistaIco[idMista];
-            if (ico === undefined) {
-                return;
-            }
-            let info = subjekty[ico];
-            let subjektMista = {};
-
-            info["zarizeni"].forEach( (zarizeni) => {
-                zarizeni["mista"].forEach( (misto) => {
-                    let zarIdMista = misto["id_mista"];
-                    let geo = mistaLoc[zarIdMista];
-                    if (geo !== undefined) {
-                        let lat = geo.lat;
-                        let lon = geo.lon;
-                        if ([lat, lon] in subjektMista) {
-                            subjektMista[[lat, lon]].push(`
-                            ${info.nazev} (${info.ico})<br>
-                            ${zarizeni.nazev} (${zarizeni.izo})<br>
-                            ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${zarIdMista})
-                            `);
-                        } else {
-                            subjektMista[[lat, lon]] = [`
-                            ${info.nazev} (${info.ico})<br>
-                            ${zarizeni.nazev} (${zarizeni.izo})<br>
-                            ${misto.druh} | ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${zarIdMista})
-                            `];
-                        }
-                    }
-                });
-            });
-
-            Object.keys(subjektMista).forEach( (lat_lon) => {
-                let [lat, lon] = lat_lon.split(",");
-                let info = subjektMista[lat_lon];
-                L.marker([lat, lon]).addTo(map).bindPopup(info.join("<hr>"));
-            });
         });
     }
-
-    /*
-    Object.keys(obj_info).forEach( (key) => {
-        // Subjekt
-        let info = obj_info[key];
-        let subjekt_mista = {};
-
-        info["zarizeni"].forEach( (zarizeni) => {
-            zarizeni["mista"].forEach( (misto) => {
-                let id_mista = misto["id_mista"];
-                let geo = obj_geo[id_mista];
-                if (geo !== undefined) {
-                    let lat = geo.lat;
-                    let lon = geo.lon;
-                    if ([lat, lon] in subjekt_mista) {
-                        subjekt_mista[[lat, lon]].push(`
-                        ${info.nazev} (${info.ico})<br>
-                        ${zarizeni.nazev} (${zarizeni.izo})<br>
-                        ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${id_mista})
-                        `);
-                    } else {
-                        subjekt_mista[[lat, lon]] = [`
-                        ${info.nazev} (${info.ico})<br>
-                        ${zarizeni.nazev} (${zarizeni.izo})<br>
-                        ${misto.druh} | ${misto.adr1}, ${misto.adr2}, ${misto.adr3} (${id_mista})
-                        `];
-                    }
-                }
-            });
-        });
-
-        Object.keys(subjekt_mista).forEach( (lat_lon) => {
-            let [lat, lon] = lat_lon.split(",");
-            let info = subjekt_mista[lat_lon];
-            L.marker([lat, lon]).addTo(map).bindPopup(info.join("<hr>"));
-        });
-    });
-    */
 }
 
 const fillView = () => {
@@ -265,8 +158,8 @@ const fillView = () => {
     const nelon = bounds._northEast.lng;
 
     let viewIdsMista = [];
-    Object.keys(mistaLoc).forEach( (idMista) => {
-        let misto = mistaLoc[idMista];
+    Object.keys(reditelstviLoc).forEach( (idMista) => {
+        let misto = reditelstviLoc[idMista];
         let lat = misto.lat;
         let lon = misto.lon;
 
@@ -291,7 +184,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 getData().then((ret) => {
-    fillMap( Object.keys(mistaLoc) );
+    fillMap( Object.keys(reditelstviLoc) );
 });
 
 // Events
@@ -304,6 +197,5 @@ map.on('moveend', () => {
         console.log(map.getBounds());
         console.log(map.getZoom());
         fillView();
-        //clearMarkers();
     }, 200);
 });
