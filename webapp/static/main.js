@@ -1,7 +1,7 @@
 var map = L.map('map');
-//var subjekty;
 var reditelstviLoc;
 var mistaLoc;
+var mistaIco;
 var filterDruh = [];
 
 const callAPI = async (url) => {
@@ -24,22 +24,17 @@ const callAPIJson = async (url, json) => {
 }
 
 const getData = () => {
-    //let subjektyResp = callAPI("/api/info/all");
     let reditelstviLocResp = callAPI("/api/geo/reditelstvi");
     let mistaLocResp = callAPI("/api/geo/mista");
     let promise = new Promise((resolve) => {
-        //subjektyResp.then( (obj) => {
-        //    subjekty = obj;
             reditelstviLocResp.then( (obj) => {
                 reditelstviLoc = obj;
                 mistaLocResp.then( (obj) => {
                     mistaLoc = obj;
 
-
                     resolve("done");
                 });
             });
-        //});
     });
     return promise;
 }
@@ -70,7 +65,7 @@ const clusterPoints = (lats, lons, n) => {
         let clon = unclusteredLons.pop();
 
         // If was last then lone cluster
-        if (unclusteredLats.length < 2) {
+        if (unclusteredLats.length <= 1) {
             clustersLats.push([clat]);
             clustersLons.push([clon]);
             break;
@@ -127,60 +122,57 @@ const clusterPoints = (lats, lons, n) => {
 };
 
 
-const fillMap = (idsMista) => {
+const fillMap = (idsMista, isReditelstvi) => {
     const clusterSize = 30;
-    let promise = new Promise( (resolve) => {
-        if (filterDruh.length > 0) {
-            callAPIJson("/api/geo/reditelstvi/filter",
-            {
-                "druhy": filterDruh,
-                "icos": idsMista,
+    console.log("Current count", idsMista.length);
 
-            }).then( (obj) => {
-                idsMista = obj;
-                resolve("done");
-            });
-        } else {
-            resolve("done");
-        }
-    });
-    promise.then( (ret) => {
-        console.log("Current count", idsMista.length);
-
-        if (idsMista.length > 200) {
-            let lats = [];
-            let lons = [];
-            idsMista.forEach( (idMista) => {
-                let geo = reditelstviLoc[idMista];
-                if (geo !== undefined) {
-                    let lat = geo.lat;
-                    let lon = geo.lon;
-
-                    lats.push(lat);
-                    lons.push(lon);
-                }
-            });
-
-
-            console.log(lats.length);
-            let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
-            console.log(cLats.length);
-
-            for (let i = 0; i < cLats.length; i++) {
-                let lat = cLats[i];
-                let lon = cLons[i];
-                L.marker([lat, lon], {
-                    icon: new L.DivIcon({
-                        html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
-                    })
-                }).addTo(map);
+    if (idsMista.length > 200) {
+        let lats = [];
+        let lons = [];
+        idsMista.forEach( (idMista) => {
+            let geo;
+            if (isReditelstvi) {
+                geo = reditelstviLoc[idMista];
+            } else {
+                geo = mistaLoc[idMista];
             }
-        } else {
-            idsMista.forEach( (idMista) => {
-                let geo = reditelstviLoc[idMista];
-                if (geo !== undefined) {
-                    let lat = geo.lat;
-                    let lon = geo.lon;
+
+            if (geo !== undefined) {
+                let lat = geo.lat;
+                let lon = geo.lon;
+
+                lats.push(lat);
+                lons.push(lon);
+            }
+        });
+
+
+        console.log(lats.length);
+        let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
+        console.log(cLats.length);
+
+        for (let i = 0; i < cLats.length; i++) {
+            let lat = cLats[i];
+            let lon = cLons[i];
+            L.marker([lat, lon], {
+                icon: new L.DivIcon({
+                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
+                })
+            }).addTo(map);
+        }
+    } else {
+        let locMarkers = {};
+        idsMista.forEach( (idMista) => {
+            let geo;
+            if (isReditelstvi) {
+                geo = reditelstviLoc[idMista];
+            } else {
+                geo = mistaLoc[idMista];
+            }
+            if (geo !== undefined) {
+                let lat = geo.lat;
+                let lon = geo.lon;
+                if (isReditelstvi) {
                     let marker = L.marker([lat, lon]).addTo(map);
                     let ico = idMista;
                     callAPI(`/api/info/reditelstvi/${ico}`).then(
@@ -190,12 +182,71 @@ const fillMap = (idsMista) => {
                             ${obj.nazev} <br>
                             <hr>
                             `);
-                        });
-                }
-            });
-        }
+                    });
+                } else {
+                    if ([lat, lon] in locMarkers) {
+                        let [marker, promise] = locMarkers[[lat, lon]];
+                        promise.then( (ret) => {
+                            let popup = marker.getPopup();
 
-    });
+                            callAPI(`/api/info/mista/${idMista}`).then(
+                                (obj) => {
+                                    obj.zarizeni.forEach( (zarizeni) => {
+                                        zarizeni.mista.forEach( (misto) => {
+                                            if (misto["id_mista"] == idMista) {
+
+                                                popup.setContent(popup.getContent() + `
+                                                ${obj.ico}<br>
+                                                ${obj.nazev} <br>
+                                                ${idMista} <br>
+                                                ${misto.druh} <br>
+                                                <hr>
+                                                `);
+
+                                            }
+                                        });
+                                    });
+                            });
+                        })
+                    } else {
+                        let marker = L.marker([lat, lon]).addTo(map);
+                        let promise = new Promise( (resolve) => {
+                            callAPI(`/api/info/mista/${idMista}`).then(
+                                (obj) => {
+                                    /*
+                                    marker.bindPopup(`
+                                    ${obj.ico}<br>
+                                    ${obj.nazev} <br>
+                                    ${idMista} <br>
+                                    <hr>
+                                    `);
+                                    resolve("done");
+                                    */
+                                    obj.zarizeni.forEach( (zarizeni) => {
+                                        zarizeni.mista.forEach( (misto) => {
+                                            if (misto["id_mista"] == idMista) {
+
+                                                marker.bindPopup(`
+                                                ${obj.ico}<br>
+                                                ${obj.nazev} <br>
+                                                ${idMista} <br>
+                                                ${misto.druh} <br>
+                                                <hr>
+                                                `);
+                                                resolve("done");
+
+                                            }
+                                        });
+                                    });
+                            });
+                        });
+                        locMarkers[[lat, lon]] = [marker, promise];
+                    }
+                }
+            }
+        });
+    }
+
 }
 
 const fillView = () => {
@@ -206,21 +257,45 @@ const fillView = () => {
     const nelat = bounds._northEast.lat;
     const nelon = bounds._northEast.lng;
 
-    let viewIdsMista = [];
-    Object.keys(reditelstviLoc).forEach( (idMista) => {
-        let misto = reditelstviLoc[idMista];
-        let lat = misto.lat;
-        let lon = misto.lon;
 
-        if (lat < nelat && lat > swlat
-            && lon < nelon && lon > swlon) {
-            viewIdsMista.push(idMista);
-        }
-    });
+    if (filterDruh.length > 0) {
+        let viewIdsMista = [];
+        Object.keys(mistaLoc).forEach( (idMista) => {
+            let misto = mistaLoc[idMista];
+            let lat = misto.lat;
+            let lon = misto.lon;
 
-    console.log(viewIdsMista);
-    clearMarkers();
-    fillMap(viewIdsMista);
+            if (lat < nelat && lat > swlat
+                && lon < nelon && lon > swlon) {
+                viewIdsMista.push(idMista);
+            }
+        });
+        callAPIJson("/api/geo/mista/filter",
+        {
+            "druhy": filterDruh,
+            "idsMista": viewIdsMista,
+
+        }).then( (obj) => {
+            clearMarkers();
+            // intersection
+            fillMap(obj.filter( (x) => viewIdsMista.includes(x)), false);
+        });
+    } else {
+        let viewIdsMista = [];
+        Object.keys(reditelstviLoc).forEach( (idMista) => {
+            let misto = reditelstviLoc[idMista];
+            let lat = misto.lat;
+            let lon = misto.lon;
+
+            if (lat < nelat && lat > swlat
+                && lon < nelon && lon > swlon) {
+                viewIdsMista.push(idMista);
+            }
+        });
+
+        clearMarkers();
+        fillMap(viewIdsMista, true);
+    }
 }
 
 const filterByDruh = (el) => {
@@ -250,7 +325,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Get data and fill map
 getData().then((ret) => {
-    fillMap( Object.keys(reditelstviLoc) );
+    fillMap( Object.keys(reditelstviLoc), true );
 });
 
 // Events
