@@ -1,26 +1,45 @@
 var map = L.map('map');
-var subjekty;
+//var subjekty;
 var reditelstviLoc;
+var mistaLoc;
+var filterDruh = [];
 
 const callAPI = async (url) => {
     const response = await fetch(url);
-    const data = await response.json(); 
 
-    return data;
+    return await response.json(); 
 };
 
-const getData = () => {
-    let infoJsonResp = callAPI("/api/info/all");
-    let geoJsonResp = callAPI("/api/geo/reditelstvi");
-    let promise = new Promise((resolve) => {
-        infoJsonResp.then( (obj) => {
-            subjekty = obj;
-            geoJsonResp.then( (obj) => {
-                reditelstviLoc = obj;
+const callAPIJson = async (url, json) => {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(json)
+     });
 
-                resolve("done");
+    return await response.json();
+}
+
+const getData = () => {
+    //let subjektyResp = callAPI("/api/info/all");
+    let reditelstviLocResp = callAPI("/api/geo/reditelstvi");
+    let mistaLocResp = callAPI("/api/geo/mista");
+    let promise = new Promise((resolve) => {
+        //subjektyResp.then( (obj) => {
+        //    subjekty = obj;
+            reditelstviLocResp.then( (obj) => {
+                reditelstviLoc = obj;
+                mistaLocResp.then( (obj) => {
+                    mistaLoc = obj;
+
+
+                    resolve("done");
+                });
             });
-        });
+        //});
     });
     return promise;
 }
@@ -110,48 +129,73 @@ const clusterPoints = (lats, lons, n) => {
 
 const fillMap = (idsMista) => {
     const clusterSize = 30;
-    if (idsMista.length > 200) {
-        let lats = [];
-        let lons = [];
-        idsMista.forEach( (idMista) => {
-            let geo = reditelstviLoc[idMista];
-            if (geo !== undefined) {
-                let lat = geo.lat;
-                let lon = geo.lon;
+    let promise = new Promise( (resolve) => {
+        if (filterDruh.length > 0) {
+            callAPIJson("/api/geo/reditelstvi/filter",
+            {
+                "druhy": filterDruh,
+                "icos": idsMista,
 
-                lats.push(lat);
-                lons.push(lon);
-            }
-        });
-
-
-        console.log(lats.length);
-        let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
-        console.log(cLats.length);
-
-        for (let i = 0; i < cLats.length; i++) {
-            let lat = cLats[i];
-            let lon = cLons[i];
-            L.marker([lat, lon], {
-                icon: new L.DivIcon({
-                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
-                })
-            }).addTo(map);
+            }).then( (obj) => {
+                idsMista = obj;
+                resolve("done");
+            });
+        } else {
+            resolve("done");
         }
-    } else {
-        idsMista.forEach( (idMista) => {
-            let geo = reditelstviLoc[idMista];
-            if (geo !== undefined) {
-                let lat = geo.lat;
-                let lon = geo.lon;
-                let subjekt = subjekty[idMista];
-                L.marker([lat, lon]).addTo(map).bindPopup(`
-                ${subjekt.nazev} (${subjekt.ico})<br>
-                ${subjekt.reditelstvi.nazev}
-                `);
+    });
+    promise.then( (ret) => {
+        console.log("Current count", idsMista.length);
+
+        if (idsMista.length > 200) {
+            let lats = [];
+            let lons = [];
+            idsMista.forEach( (idMista) => {
+                let geo = reditelstviLoc[idMista];
+                if (geo !== undefined) {
+                    let lat = geo.lat;
+                    let lon = geo.lon;
+
+                    lats.push(lat);
+                    lons.push(lon);
+                }
+            });
+
+
+            console.log(lats.length);
+            let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
+            console.log(cLats.length);
+
+            for (let i = 0; i < cLats.length; i++) {
+                let lat = cLats[i];
+                let lon = cLons[i];
+                L.marker([lat, lon], {
+                    icon: new L.DivIcon({
+                        html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
+                    })
+                }).addTo(map);
             }
-        });
-    }
+        } else {
+            idsMista.forEach( (idMista) => {
+                let geo = reditelstviLoc[idMista];
+                if (geo !== undefined) {
+                    let lat = geo.lat;
+                    let lon = geo.lon;
+                    let marker = L.marker([lat, lon]).addTo(map);
+                    let ico = idMista;
+                    callAPI(`/api/info/reditelstvi/${ico}`).then(
+                        (obj) => {
+                            marker.bindPopup(`
+                            ${obj.ico}<br>
+                            ${obj.nazev} <br>
+                            <hr>
+                            `);
+                        });
+                }
+            });
+        }
+
+    });
 }
 
 const fillView = () => {
@@ -179,6 +223,22 @@ const fillView = () => {
     fillMap(viewIdsMista);
 }
 
+const filterByDruh = (el) => {
+    let druh = el.value;
+    console.log(druh, el.checked);
+    if (el.checked){ // Add
+        filterDruh.push(druh);
+    } else { // Remove
+        filterDruh = filterDruh.filter( (x) => x != druh );
+    }
+    console.log(filterDruh);
+    fillView();
+};
+
+const detailView = (ico) => {
+    let subjekt = subjekty[ico];
+}
+
 // INIT
 
 // Set view add tileLayer
@@ -188,6 +248,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
+// Get data and fill map
 getData().then((ret) => {
     fillMap( Object.keys(reditelstviLoc) );
 });

@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flask import render_template
 from flask import send_from_directory
-from data import SUBJEKTY, MISTA_LOC, MISTA_ICO, LOC_MISTA, REDITELSTVI_LOC
+from data import SUBJEKTY, MISTA_LOC, REDITELSTVI_LOC
 
 
 #### Flask ####
@@ -23,22 +23,24 @@ def api_geo_mista():
 def api_geo_reditelstvi():
     return REDITELSTVI_LOC
 
-@app.route("/api/geo/view/<int:swlat>/<int:swlon>/<int:nelat>/<int:nelon>")
-def api_geo_view(swlat, swlon, nelat, nelon):
-    return "%s %s %s %s" % (swlat, swlon, nelat, nelon)
+@app.route("/api/geo/reditelstvi/filter", methods=["POST"])
+def api_geo_reditelstvi_filter():
+    icos = []
 
-@app.route("/api/info/all")
-def api_info_all():
-    return SUBJEKTY
+    json = request.get_json()
+    druhy = json.get("druhy")
+    if druhy:
+        for ico in json.get("icos", []):
+            subjekt = SUBJEKTY.get(ico, {})
+            for zarizeni in subjekt.get("zarizeni", []):
+                if zarizeni["druh"] in druhy:
+                    icos.append(ico)
 
-@app.route("/api/mapping/mistaico")
-def api_mapping_mistaico():
-    return MISTA_ICO
+    return icos
 
-@app.route("/api/mapping/locmista")
-def api_mapping_locmista():
-    return LOC_MISTA
-
+@app.route("/api/info/reditelstvi/<ico>")
+def api_info_reditelstvi(ico):
+    return SUBJEKTY.get(ico, {})
 
 if __name__ == "__main__":
     app.run(debug=True)
