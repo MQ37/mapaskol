@@ -8,6 +8,23 @@ import sys
 
 API_TOKEN = os.environ["API_TOKEN"]
 
+KRAJE = {
+        "CZ011": "Praha",
+        "CZ021": "Středočeský kraj",
+        "CZ031": "Jihočeský kraj",
+        "CZ032": "Plzeňský kraj",
+        "CZ041": "Karlovarský kraj",
+        "CZ042": "Ústecký kraj",
+        "CZ051": "Liberecký kraj",
+        "CZ052": "Královéhradecký kraj",
+        "CZ053": "Pardubický kraj",
+        "CZ061": "Vysočina",
+        "CZ062": "Jihomoravský kraj",
+        "CZ071": "Olomoucký kraj",
+        "CZ072": "Zlínský kraj",
+        "CZ081": "Moravskoslezský kraj",
+        }
+
 
 def read_json(filepath):
     if os.path.exists(filepath):
@@ -73,6 +90,8 @@ def main(args):
     try:
         for subjekt in subjekty:
             info = subjekt_info(subjekt)
+            okres = info["reditelstvi"]["okres"]
+            kraj = KRAJE[okres[:5]]
 
             for zarizeni in info.get("zarizeni", []):
                 for misto in zarizeni.get("mista", []):
@@ -90,6 +109,7 @@ def main(args):
                     adr3 = misto["adr3"]
 
                     adr = ",".join(filter(None, [adr1, adr2, adr3]))
+                    adr += ",%s" % kraj
 
                     time.sleep(1)
                     geo_loc = geo_lookup(adr)
