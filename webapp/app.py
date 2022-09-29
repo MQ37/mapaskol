@@ -35,9 +35,12 @@ def api_geo_reditelstvi_filter():
         to_remove = []
         for ico in icos:
             subjekt = SUBJEKTY.get(ico, {})
+            found = False
             for zarizeni in subjekt.get("zarizeni", []):
-                if zarizeni["druh"] not in druhy:
-                    to_remove.append(ico)
+                if zarizeni["druh"] in druhy:
+                    found = True
+            if not found:
+                to_remove.append(ico)
         for ico in to_remove:
             icos.remove(ico)
 

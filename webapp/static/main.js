@@ -176,16 +176,42 @@ const fillMap = (idsMista, isReditelstvi) => {
                 let lat = geo.lat;
                 let lon = geo.lon;
                 if (isReditelstvi) {
-                    let marker = L.marker([lat, lon]).addTo(map);
                     let ico = idMista;
-                    callAPI(`/api/info/reditelstvi/${ico}`).then(
-                        (obj) => {
-                            marker.bindPopup(`
-                            ${obj.ico}<br>
-                            ${obj.nazev} <br>
-                            <hr>
-                            `);
-                    });
+                    if ([lat, lon] in locMarkers) {
+                        let [marker, promise] = locMarkers[[lat, lon]];
+                        promise.then( (ret) => {
+                            let popup = marker.getPopup();
+
+                            callAPI(`/api/info/reditelstvi/${ico}`).then(
+                                (obj) => {
+                                    popup.setContent(popup.getContent() + `
+                                    ${obj.ico}<br>
+                                    ${obj.nazev} <br>
+                                    ${obj.reditelstvi.adr1} <br>
+                                    ${obj.reditelstvi.adr2} <br>
+                                    ${obj.reditelstvi.adr3} <br>
+                                    <hr>
+                                    `);
+                            });
+                        })
+                    } else {
+                        let marker = L.marker([lat, lon]).addTo(map);
+                        let promise = new Promise( (resolve) => {
+                            callAPI(`/api/info/reditelstvi/${ico}`).then(
+                                (obj) => {
+                                    marker.bindPopup(`
+                                    ${obj.ico}<br>
+                                    ${obj.nazev} <br>
+                                    ${obj.reditelstvi.adr1} <br>
+                                    ${obj.reditelstvi.adr2} <br>
+                                    ${obj.reditelstvi.adr3} <br>
+                                    <hr>
+                                    `);
+                                    resolve("done");
+                            });
+                        });
+                        locMarkers[[lat, lon]] = [marker, promise];
+                    }
                 } else {
                     if ([lat, lon] in locMarkers) {
                         let [marker, promise] = locMarkers[[lat, lon]];
@@ -295,6 +321,7 @@ const fillView = () => {
         if (filterDruh.length > 0 || filterKraj.length > 0) {
             callAPIJson("/api/geo/reditelstvi/filter",
             {
+                "druhy": filterDruh,
                 "kraje": filterKraj,
                 "icos": viewIdsMista,
 
