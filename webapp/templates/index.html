@@ -14,6 +14,13 @@
     <body>
      <div id="map"></div>
 
+     <label>Zobrazit</label>
+     <select onchange="setViewTyp(this);">
+       <option value="reditelstvi">Ředitelství</option>
+       <option value="mista">Místa výkonu</option>
+     </select> 
+
+     <br> Filtrování podle druhu: <br>
      <input type="checkbox" value="A00" onchange="filterByDruh(this);">
      <label>Mateřské školy</label>
      <input type="checkbox" value="B00" onchange="filterByDruh(this);">
@@ -82,6 +89,36 @@
      <label>Výdejna lesní mateřské školy</label>
      <input type="checkbox" value="H10" onchange="filterByDruh(this);">
      <label>Škola v přírodě</label>
+
+     <br> Filtrování podle kraje: <br>
+     <input type="checkbox" value="CZ011" onchange="filterByKraj(this);">
+     <label>Praha</label>
+     <input type="checkbox" value="CZ021" onchange="filterByKraj(this);">
+     <label>Středočeský kraj</label>
+     <input type="checkbox" value="CZ031" onchange="filterByKraj(this);">
+     <label>Jihočeský kraj</label>
+     <input type="checkbox" value="CZ032" onchange="filterByKraj(this);">
+     <label>Plzeňský kraj</label>
+     <input type="checkbox" value="CZ041" onchange="filterByKraj(this);">
+     <label>Karlovarský kraj</label>
+     <input type="checkbox" value="CZ042" onchange="filterByKraj(this);">
+     <label>Ústecký kraj</label>
+     <input type="checkbox" value="CZ051" onchange="filterByKraj(this);">
+     <label>Liberecký kraj</label>
+     <input type="checkbox" value="CZ052" onchange="filterByKraj(this);">
+     <label>Královéhradecký kraj</label>
+     <input type="checkbox" value="CZ053" onchange="filterByKraj(this);">
+     <label>Pardubický kraj</label>
+     <input type="checkbox" value="CZ061" onchange="filterByKraj(this);">
+     <label>Vysočina</label>
+     <input type="checkbox" value="CZ062" onchange="filterByKraj(this);">
+     <label>Jihomoravský kraj</label>
+     <input type="checkbox" value="CZ071" onchange="filterByKraj(this);">
+     <label>Olomoucký kraj</label>
+     <input type="checkbox" value="CZ072" onchange="filterByKraj(this);">
+     <label>Zlínský kraj</label>
+     <input type="checkbox" value="CZ081" onchange="filterByKraj(this);">
+     <label>Moravskoslezský kraj</label>
 
      <script src="/static/main.js"></script>
     </body>

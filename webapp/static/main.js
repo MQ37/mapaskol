@@ -2,7 +2,10 @@ var map = L.map('map');
 var reditelstviLoc;
 var mistaLoc;
 var mistaIco;
+
+var viewTyp = "reditelstvi";
 var filterDruh = [];
+var filterKraj = [];
 
 const callAPI = async (url) => {
     const response = await fetch(url);
@@ -213,15 +216,6 @@ const fillMap = (idsMista, isReditelstvi) => {
                         let promise = new Promise( (resolve) => {
                             callAPI(`/api/info/mista/${idMista}`).then(
                                 (obj) => {
-                                    /*
-                                    marker.bindPopup(`
-                                    ${obj.ico}<br>
-                                    ${obj.nazev} <br>
-                                    ${idMista} <br>
-                                    <hr>
-                                    `);
-                                    resolve("done");
-                                    */
                                     obj.zarizeni.forEach( (zarizeni) => {
                                         zarizeni.mista.forEach( (misto) => {
                                             if (misto["id_mista"] == idMista) {
@@ -258,43 +252,61 @@ const fillView = () => {
     const nelon = bounds._northEast.lng;
 
 
-    if (filterDruh.length > 0) {
+    if ( viewTyp == "mista" ) {
         let viewIdsMista = [];
         Object.keys(mistaLoc).forEach( (idMista) => {
-            let misto = mistaLoc[idMista];
-            let lat = misto.lat;
-            let lon = misto.lon;
+            let geo = mistaLoc[idMista];
+            let lat = geo.lat;
+            let lon = geo.lon;
 
             if (lat < nelat && lat > swlat
                 && lon < nelon && lon > swlon) {
                 viewIdsMista.push(idMista);
             }
         });
-        callAPIJson("/api/geo/mista/filter",
-        {
-            "druhy": filterDruh,
-            "idsMista": viewIdsMista,
+        if (filterDruh.length > 0 || filterKraj.length > 0) {
+            callAPIJson("/api/geo/mista/filter",
+            {
+                "druhy": filterDruh,
+                "kraje": filterKraj,
+                "idsMista": viewIdsMista,
 
-        }).then( (obj) => {
+            }).then( (obj) => {
+                clearMarkers();
+                // intersection
+                fillMap(obj.filter( (x) => viewIdsMista.includes(x)), false);
+            });
+        } else {
             clearMarkers();
-            // intersection
-            fillMap(obj.filter( (x) => viewIdsMista.includes(x)), false);
-        });
-    } else {
+            fillMap(viewIdsMista, false);
+        }
+    } else if ( viewTyp == "reditelstvi" ) {
         let viewIdsMista = [];
         Object.keys(reditelstviLoc).forEach( (idMista) => {
-            let misto = reditelstviLoc[idMista];
-            let lat = misto.lat;
-            let lon = misto.lon;
+            let geo = reditelstviLoc[idMista];
+            let lat = geo.lat;
+            let lon = geo.lon;
 
             if (lat < nelat && lat > swlat
                 && lon < nelon && lon > swlon) {
                 viewIdsMista.push(idMista);
             }
         });
+        if (filterDruh.length > 0 || filterKraj.length > 0) {
+            callAPIJson("/api/geo/reditelstvi/filter",
+            {
+                "kraje": filterKraj,
+                "icos": viewIdsMista,
 
-        clearMarkers();
-        fillMap(viewIdsMista, true);
+            }).then( (obj) => {
+                clearMarkers();
+                // intersection
+                fillMap(obj.filter( (x) => viewIdsMista.includes(x)), true);
+            });
+        } else {
+            clearMarkers();
+            fillMap(viewIdsMista, true);
+        }
     }
 }
 
@@ -309,6 +321,26 @@ const filterByDruh = (el) => {
     console.log(filterDruh);
     fillView();
 };
+
+const filterByKraj = (el) => {
+    let kraj = el.value;
+    console.log(kraj, el.checked);
+    if (el.checked){ // Add
+        filterKraj.push(kraj);
+    } else { // Remove
+        filterKraj = filterKraj.filter( (x) => x != kraj );
+    }
+    console.log(filterKraj);
+    fillView();
+};
+
+const setViewTyp = (el) => {
+    let typ = el.value;
+    if (typ != viewTyp) {
+        viewTyp = typ;
+        fillView();
+    }
+}
 
 const detailView = (ico) => {
     let subjekt = subjekty[ico];

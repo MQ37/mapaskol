@@ -25,36 +25,76 @@ def api_geo_reditelstvi():
 
 @app.route("/api/geo/reditelstvi/filter", methods=["POST"])
 def api_geo_reditelstvi_filter():
-    icos = []
-
     json = request.get_json()
+
+    icos = json.get("icos", [])
     druhy = json.get("druhy")
+    kraje = json.get("kraje")
+
     if druhy:
-        for ico in json.get("icos", []):
+        to_remove = []
+        for ico in icos:
             subjekt = SUBJEKTY.get(ico, {})
             for zarizeni in subjekt.get("zarizeni", []):
-                if zarizeni["druh"] in druhy:
-                    icos.append(ico)
+                if zarizeni["druh"] not in druhy:
+                    to_remove.append(ico)
+        for ico in to_remove:
+            icos.remove(ico)
+
+    if kraje:
+        to_remove = []
+        for ico in icos:
+            subjekt = SUBJEKTY.get(ico, {})
+            reditelstvi = subjekt["reditelstvi"]
+            okres = reditelstvi["okres"]
+            kraj = okres[:5]
+
+            if kraj not in kraje:
+                to_remove.append(ico)
+        for ico in to_remove:
+            icos.remove(ico)
 
     return icos
 
 @app.route("/api/geo/mista/filter", methods=["POST"])
 def api_geo_mista_filter():
-    ids_mista = []
-
     json = request.get_json()
+
+    ids_mista = json.get("idsMista", [])
     druhy = json.get("druhy")
-    view_ids_mista = json.get("idsMista", [])
+    kraje = json.get("kraje")
     if druhy:
-        for id_mista in view_ids_mista:
+        to_remove = []
+        for id_mista in ids_mista:
             ico = MISTA_ICO[id_mista]
             subjekt = SUBJEKTY.get(ico, {})
+            found = False
             for zarizeni in subjekt.get("zarizeni", []):
-                if zarizeni["druh"] in druhy:
-                    for misto in zarizeni.get("mista", []):
-                        if misto["id_mista"] in view_ids_mista and \
-                            misto["id_mista"] not in ids_mista:
-                            ids_mista.append(misto["id_mista"])
+                for misto in zarizeni.get("mista", []):
+                    if misto["id_mista"] == id_mista:
+                        if zarizeni["druh"] not in druhy:
+                            to_remove.append(id_mista)
+                            found = True
+                            break
+                if found:
+                    break
+        for id_mista in to_remove:
+            ids_mista.remove(id_mista)
+
+    if kraje:
+        to_remove = []
+        for id_mista in ids_mista:
+            ico = MISTA_ICO[id_mista]
+            subjekt = SUBJEKTY.get(ico, {})
+            reditelstvi = subjekt["reditelstvi"]
+            okres = reditelstvi["okres"]
+            kraj = okres[:5]
+
+            if kraj not in kraje:
+                to_remove.append(id_mista)
+
+        for id_mista in to_remove:
+            ids_mista.remove(id_mista)
 
     return ids_mista
 
