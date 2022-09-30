@@ -30,6 +30,7 @@ def api_geo_reditelstvi_filter():
     icos = json.get("icos", [])
     druhy = json.get("druhy")
     kraje = json.get("kraje")
+    okresy = json.get("okresy")
 
     if druhy:
         to_remove = []
@@ -51,8 +52,18 @@ def api_geo_reditelstvi_filter():
             reditelstvi = subjekt["reditelstvi"]
             okres = reditelstvi["okres"]
             kraj = okres[:5]
-
             if kraj not in kraje:
+                to_remove.append(ico)
+        for ico in to_remove:
+            icos.remove(ico)
+
+    if okresy:
+        to_remove = []
+        for ico in icos:
+            subjekt = SUBJEKTY.get(ico, {})
+            reditelstvi = subjekt["reditelstvi"]
+            okres = reditelstvi["okres"]
+            if okres not in okresy:
                 to_remove.append(ico)
         for ico in to_remove:
             icos.remove(ico)
@@ -66,6 +77,8 @@ def api_geo_mista_filter():
     ids_mista = json.get("idsMista", [])
     druhy = json.get("druhy")
     kraje = json.get("kraje")
+    okresy = json.get("okresy")
+
     if druhy:
         to_remove = []
         for id_mista in ids_mista:
@@ -92,10 +105,20 @@ def api_geo_mista_filter():
             reditelstvi = subjekt["reditelstvi"]
             okres = reditelstvi["okres"]
             kraj = okres[:5]
-
             if kraj not in kraje:
                 to_remove.append(id_mista)
+        for id_mista in to_remove:
+            ids_mista.remove(id_mista)
 
+    if okresy:
+        to_remove = []
+        for id_mista in ids_mista:
+            ico = MISTA_ICO[id_mista]
+            subjekt = SUBJEKTY.get(ico, {})
+            reditelstvi = subjekt["reditelstvi"]
+            okres = reditelstvi["okres"]
+            if okres not in okresy:
+                to_remove.append(id_mista)
         for id_mista in to_remove:
             ids_mista.remove(id_mista)
 

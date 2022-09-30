@@ -6,6 +6,7 @@ var mistaIco;
 var viewTyp = "reditelstvi";
 var filterDruh = [];
 var filterKraj = [];
+var filterOkres = [];
 
 const callAPI = async (url) => {
     const response = await fetch(url);
@@ -290,11 +291,12 @@ const fillView = () => {
                 viewIdsMista.push(idMista);
             }
         });
-        if (filterDruh.length > 0 || filterKraj.length > 0) {
+        if (filterDruh.length > 0 || filterKraj.length > 0 || filterOkres.length > 0) {
             callAPIJson("/api/geo/mista/filter",
             {
                 "druhy": filterDruh,
                 "kraje": filterKraj,
+                "okresy": filterOkres,
                 "idsMista": viewIdsMista,
 
             }).then( (obj) => {
@@ -318,11 +320,12 @@ const fillView = () => {
                 viewIdsMista.push(idMista);
             }
         });
-        if (filterDruh.length > 0 || filterKraj.length > 0) {
+        if (filterDruh.length > 0 || filterKraj.length > 0 || filterOkres.length > 0) {
             callAPIJson("/api/geo/reditelstvi/filter",
             {
                 "druhy": filterDruh,
                 "kraje": filterKraj,
+                "okresy": filterOkres,
                 "icos": viewIdsMista,
 
             }).then( (obj) => {
@@ -358,6 +361,18 @@ const filterByKraj = (el) => {
         filterKraj = filterKraj.filter( (x) => x != kraj );
     }
     console.log(filterKraj);
+    fillView();
+};
+
+const filterByOkres = (el) => {
+    let okres = el.value;
+    console.log(okres, el.checked);
+    if (el.checked){ // Add
+        filterOkres.push(okres);
+    } else { // Remove
+        filterOkres = filterOkres.filter( (x) => x != okres );
+    }
+    console.log(filterOkres);
     fillView();
 };
 
