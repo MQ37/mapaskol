@@ -1,4 +1,4 @@
-from reader import read_xml, get_subjekty_n, subjekt_info
+from reader import read_xml, get_subjekty_n, subjekt_info, get_subjekty_all
 import argparse
 import requests
 import os
@@ -162,7 +162,7 @@ def main(args):
         n = args.n
         subjekty = get_subjekty_n(tree, n)
     elif args.all:
-        subjekty = get_subjekty_all(tree, n)
+        subjekty = get_subjekty_all(tree)
 
     try:
         for subjekt in subjekty:
