@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.1/dist/leaflet.css" integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.1/dist/leaflet.js" integrity="sha256-NDI0K41gVbWqfkkaHj15IzU7PtMoelkzyKp8TOaFQ3s=" crossorigin=""></script>
+
+        <style>
+            #map {
+                height: 98vh;
+            }
+
+            .flex-container {
+                display: flex;
+            }
+
+            .is-8 {
+                flex-basis: 80%;
+            }
+            .is-2 {
+                flex-basis: 20%;
+            }
+
+            .flex-container-column {
+                display: flex;
+                flex-direction: column;
+                max-height: 98vh;
+                justify-content: space-between;
+            }
+
+            .flex-scroll {
+                display: flex;
+                flex-direction: column;
+                overflow-y: scroll;
+                max-height: 80%;
+            }
+
+            .is-2-scroll {
+                flex-basis: 30%;
+                max-height: 30%;
+            }
+
+            .is-2-scroll {
+                flex-basis: 20%;
+                max-height: 20%;
+            }
+
+        </style>
+    </head>
+
+    <body>
+     <div class="flex-container">
+         <div class="flex-container-column is-2">
+
+             <div>
+                 <label>Zobrazit</label>
+                 <select onchange="setViewTyp(this);">
+                   <option value="reditelstvi">Ředitelství</option>
+                   <option value="mista">Místa výkonu</option>
+                 </select> 
+             </div>
+
+
+             <div class="is-2-scroll">
+                 <b>Filtrování podle druhu:</b>
+                 <div class="flex-scroll">
+                     <div>
+                         <input type="checkbox" value="A00" onchange="filterByDruh(this);">
+                         <label>Mateřské školy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="B00" onchange="filterByDruh(this);">
+                         <label>Základní školy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="C00" onchange="filterByDruh(this);">
+                         <label>Střední školy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="L11" onchange="filterByDruh(this);">
+                         <label>Školní jídelna</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="L13" onchange="filterByDruh(this);">
+                         <label>Školní jídelna - výdejna</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M60" onchange="filterByDruh(this);">
+                         <label>Přípravný stupeň základní školy speciální</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="G21" onchange="filterByDruh(this);">
+                         <label>Školní družina</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="G22" onchange="filterByDruh(this);">
+                         <label>Školní klub</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="F10" onchange="filterByDruh(this);">
+                         <label>Základní umělecká škola</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="G11" onchange="filterByDruh(this);">
+                         <label>Středisko volného času</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="D00" onchange="filterByDruh(this);">
+                         <label>Konzervatoř</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M20" onchange="filterByDruh(this);">
+                         <label>Školní knihovna</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="E00" onchange="filterByDruh(this);">
+                         <label>Vyšší odborná škola</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M79" onchange="filterByDruh(this);">
+                         <label>Jiné účelové zařízení</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="H22" onchange="filterByDruh(this);">
+                         <label>Domov mládeže</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="F20" onchange="filterByDruh(this);">
+                         <label>Jazyková škola s právem státní jazykové zkoušky</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="G40" onchange="filterByDruh(this);">
+                         <label>Zařízení pro další vzdělávání pedagogických pracovníků</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="H21" onchange="filterByDruh(this);">
+                         <label>Internát</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M30" onchange="filterByDruh(this);">
+                         <label>Školní hospodářství</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="G12" onchange="filterByDruh(this);">
+                         <label>Stanice zájmových činností</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="K10" onchange="filterByDruh(this);">
+                         <label>Pedagogicko-psychologická poradna</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M10" onchange="filterByDruh(this);">
+                         <label>Středisko služeb školám</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="L12" onchange="filterByDruh(this);">
+                         <label>Školní jídelna - vývařovna</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="K20" onchange="filterByDruh(this);">
+                         <label>Speciálně pedagogické centrum</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M40" onchange="filterByDruh(this);">
+                         <label>Středisko praktického vyučování</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="J11" onchange="filterByDruh(this);">
+                         <label>Dětský domov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="J12" onchange="filterByDruh(this);">
+                         <label>Dětský domov se školou</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="J13" onchange="filterByDruh(this);">
+                         <label>Výchovný ústav</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="J21" onchange="filterByDruh(this);">
+                         <label>Středisko výchovné péče</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="J14" onchange="filterByDruh(this);">
+                         <label>Diagnostický ústav</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="A15" onchange="filterByDruh(this);">
+                         <label>Mateřská škola (lesní mateřská škola)</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="M50" onchange="filterByDruh(this);">
+                         <label>Plavecká škola</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="L15" onchange="filterByDruh(this);">
+                         <label>Výdejna lesní mateřské školy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="H10" onchange="filterByDruh(this);">
+                         <label>Škola v přírodě</label>
+                     </div>
+                 </div>
+             </div>
+
+             <div class="is-2-scroll">
+                 <b>Filtrování podle kraje:</b>
+                 <div class="flex-scroll">
+                     <div>
+                         <input type="checkbox" value="CZ011" onchange="filterByKraj(this);">
+                         <label>Praha</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ021" onchange="filterByKraj(this);">
+                         <label>Středočeský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ031" onchange="filterByKraj(this);">
+                         <label>Jihočeský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ032" onchange="filterByKraj(this);">
+                         <label>Plzeňský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ041" onchange="filterByKraj(this);">
+                         <label>Karlovarský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ042" onchange="filterByKraj(this);">
+                         <label>Ústecký kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ051" onchange="filterByKraj(this);">
+                         <label>Liberecký kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ052" onchange="filterByKraj(this);">
+                         <label>Královéhradecký kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ053" onchange="filterByKraj(this);">
+                         <label>Pardubický kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ061" onchange="filterByKraj(this);">
+                         <label>Vysočina</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ062" onchange="filterByKraj(this);">
+                         <label>Jihomoravský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ071" onchange="filterByKraj(this);">
+                         <label>Olomoucký kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ072" onchange="filterByKraj(this);">
+                         <label>Zlínský kraj</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ081" onchange="filterByKraj(this);">
+                         <label>Moravskoslezský kraj</label>
+                     </div>
+                 </div>
+             </div>
+
+             <div class="is-2-scroll">
+                 <b>Filtrování podle okresu:</b>
+                 <div class="flex-scroll">
+                     <div>
+                         <input type="checkbox" value="CZ0100" onchange="filterByOkres(this);">
+                         <label>Hlavní město Praha</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0201" onchange="filterByOkres(this);">
+                         <label>Benešov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0202" onchange="filterByOkres(this);">
+                         <label>Beroun</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0203" onchange="filterByOkres(this);">
+                         <label>Kladno</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0204" onchange="filterByOkres(this);">
+                         <label>Kolín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0205" onchange="filterByOkres(this);">
+                         <label>Kutná Hora</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0206" onchange="filterByOkres(this);">
+                         <label>Mělník</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0207" onchange="filterByOkres(this);">
+                         <label>Mladá Boleslav</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0208" onchange="filterByOkres(this);">
+                         <label>Nymburk</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0209" onchange="filterByOkres(this);">
+                         <label>Praha-východ</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ020A" onchange="filterByOkres(this);">
+                         <label>Praha-západ</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ020B" onchange="filterByOkres(this);">
+                         <label>Příbram</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ020C" onchange="filterByOkres(this);">
+                         <label>Rakovník</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0311" onchange="filterByOkres(this);">
+                         <label>České Budějovice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0313" onchange="filterByOkres(this);">
+                         <label>Jindřichův Hradec</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0314" onchange="filterByOkres(this);">
+                         <label>Písek</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0315" onchange="filterByOkres(this);">
+                         <label>Prachatice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0316" onchange="filterByOkres(this);">
+                         <label>Strakonice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0317" onchange="filterByOkres(this);">
+                         <label>Tábor</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0321" onchange="filterByOkres(this);">
+                         <label>Domažlice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0322" onchange="filterByOkres(this);">
+                         <label>Klatovy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0323" onchange="filterByOkres(this);">
+                         <label>Plzeň-město</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0324" onchange="filterByOkres(this);">
+                         <label>Plzeň-jih</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0325" onchange="filterByOkres(this);">
+                         <label>Plzeň-sever</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0326" onchange="filterByOkres(this);">
+                         <label>Rokycany</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0327" onchange="filterByOkres(this);">
+                         <label>Tachov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0411" onchange="filterByOkres(this);">
+                         <label>Cheb</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0412" onchange="filterByOkres(this);">
+                         <label>Karlovy Vary</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0413" onchange="filterByOkres(this);">
+                         <label>Sokolov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0421" onchange="filterByOkres(this);">
+                         <label>Děčín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0422" onchange="filterByOkres(this);">
+                         <label>Chomutov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0423" onchange="filterByOkres(this);">
+                         <label>Litoměřice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0424" onchange="filterByOkres(this);">
+                         <label>Louny</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0425" onchange="filterByOkres(this);">
+                         <label>Most</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0426" onchange="filterByOkres(this);">
+                         <label>Teplice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0427" onchange="filterByOkres(this);">
+                         <label>Ústí nad Labem</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0511" onchange="filterByOkres(this);">
+                         <label>Česká Lípa</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0512" onchange="filterByOkres(this);">
+                         <label>Jablonec nad Nisou</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0513" onchange="filterByOkres(this);">
+                         <label>Liberec</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0514" onchange="filterByOkres(this);">
+                         <label>Semily</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0521" onchange="filterByOkres(this);">
+                         <label>Hradec Králové</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0522" onchange="filterByOkres(this);">
+                         <label>Jičín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0523" onchange="filterByOkres(this);">
+                         <label>Náchod</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0524" onchange="filterByOkres(this);">
+                         <label>Rychnov nad Kněžnou</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0525" onchange="filterByOkres(this);">
+                         <label>Trutnov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0531" onchange="filterByOkres(this);">
+                         <label>Chrudim</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0532" onchange="filterByOkres(this);">
+                         <label>Pardubice</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0533" onchange="filterByOkres(this);">
+                         <label>Svitavy</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0534" onchange="filterByOkres(this);">
+                         <label>Ústí nad Orlicí</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0631" onchange="filterByOkres(this);">
+                         <label>Havlíčkův Brod</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0632" onchange="filterByOkres(this);">
+                         <label>Jihlava</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0633" onchange="filterByOkres(this);">
+                         <label>Pelhřimov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0634" onchange="filterByOkres(this);">
+                         <label>Třebíč</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0635" onchange="filterByOkres(this);">
+                         <label>Žďár nad Sázavou</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0641" onchange="filterByOkres(this);">
+                         <label>Blansko</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0642" onchange="filterByOkres(this);">
+                         <label>Brno-město</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0644" onchange="filterByOkres(this);">
+                         <label>Břeclav</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0645" onchange="filterByOkres(this);">
+                         <label>Hodonín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0646" onchange="filterByOkres(this);">
+                         <label>Vyškov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0647" onchange="filterByOkres(this);">
+                         <label>Znojmo</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0711" onchange="filterByOkres(this);">
+                         <label>Jeseník</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0712" onchange="filterByOkres(this);">
+                         <label>Olomouc</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0713" onchange="filterByOkres(this);">
+                         <label>Prostějov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0714" onchange="filterByOkres(this);">
+                         <label>Přerov</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0715" onchange="filterByOkres(this);">
+                         <label>Šumperk</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0721" onchange="filterByOkres(this);">
+                         <label>Kroměříž</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0722" onchange="filterByOkres(this);">
+                         <label>Uherské Hradiště</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0723" onchange="filterByOkres(this);">
+                         <label>Vsetín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0724" onchange="filterByOkres(this);">
+                         <label>Zlín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0801" onchange="filterByOkres(this);">
+                         <label>Bruntál</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0802" onchange="filterByOkres(this);">
+                         <label>Frýdek-Místek</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0803" onchange="filterByOkres(this);">
+                         <label>Karviná</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0804" onchange="filterByOkres(this);">
+                         <label>Nový Jičín</label>
+                     </div>
+                     <div>
+                         <input type="checkbox" value="CZ0806" onchange="filterByOkres(this);">
+                         <label>Ostrava-město</label>
+                     </div>
+                 </div>
+             </div>
+
+         </div>
+         <div id="map" class="is-8"></div>
+     </div>
+
+     <script src="/main.js"></script>
+    </body>
+
+</html>
