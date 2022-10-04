@@ -1,46 +1,54 @@
+// GLOBALS
 var map = L.map('map');
+
+// VIEW GLOBALS
 var reditelstviLoc;
 var mistaLoc;
 var mistaIco = {};
 var subjekty;
 
+// FILTER GLOBALS
 var viewTyp = "reditelstvi";
 var filterDruh = [];
 var filterKraj = [];
 var filterOkres = [];
 
+// UTILS
+
 const getData = () => {
-    const promise = new Promise( (resolve) => {
+    const promise = new Promise((resolve) => {
         fetch('/data/reditelstvi_loc.json')
-          .then((response) => response.json())
-          .then((data) => {
+            .then((response) => response.json())
+            .then((data) => {
                 reditelstviLoc = data;
                 resolve("done");
-          });
+            });
     });
 
 
     fetch('/data/subjekty.json')
-      .then((response) => response.json())
-      .then((data) => {
+        .then((response) => response.json())
+        .then((data) => {
             subjekty = data;
 
             fetch('/data/mista_loc.json')
-              .then((response) => response.json())
-              .then((data) => {
+                .then((response) => response.json())
+                .then((data) => {
                     mistaLoc = data;
 
-                    Object.keys(subjekty).forEach( (ico) => {
+                    Object.keys(subjekty).forEach((ico) => {
                         let subj = subjekty[ico];
 
-                        subj.zarizeni.forEach( (zar) => {
-                            zar.mista.forEach( (misto) => {
+                        subj.zarizeni.forEach((zar) => {
+                            zar.mista.forEach((misto) => {
                                 mistaIco[misto.id_mista] = ico;
                             });
                         });
+
                     });
-              });
-      });
+
+                });
+        });
 
     return promise;
 }
@@ -54,8 +62,8 @@ const clearMarkers = () => {
 }
 
 const euclideanDistance = (lat1, lon1, lat2, lon2) => {
-    return Math.sqrt( (lat1 - lat2)*(lat1-lat2) +
-        (lon1-lon2)*(lon1-lon2) )
+    return Math.sqrt((lat1 - lat2) * (lat1 - lat2) +
+        (lon1 - lon2) * (lon1 - lon2))
 };
 
 const clusterPoints = (lats, lons, n) => {
@@ -81,7 +89,7 @@ const clusterPoints = (lats, lons, n) => {
         for (let i = 0; i < unclusteredLats.length; i++) {
             let lat = unclusteredLats[i];
             let lon = unclusteredLons[i];
-            distances.push( euclideanDistance(clat, clon, lat, lon) );
+            distances.push(euclideanDistance(clat, clon, lat, lon));
         }
 
         let clusterLats = [];
@@ -127,6 +135,7 @@ const clusterPoints = (lats, lons, n) => {
     return [clustersLats, clustersLons];
 };
 
+// VIEW
 
 const fillMap = (idsMista, isReditelstvi) => {
     const clusterSize = 30;
@@ -135,7 +144,7 @@ const fillMap = (idsMista, isReditelstvi) => {
     if (idsMista.length > 200) {
         let lats = [];
         let lons = [];
-        idsMista.forEach( (idMista) => {
+        idsMista.forEach((idMista) => {
             let geo;
             if (isReditelstvi) {
                 geo = reditelstviLoc[idMista];
@@ -168,7 +177,7 @@ const fillMap = (idsMista, isReditelstvi) => {
         }
     } else {
         let locMarkers = {};
-        idsMista.forEach( (idMista) => {
+        idsMista.forEach((idMista) => {
             let geo;
             if (isReditelstvi) {
                 geo = reditelstviLoc[idMista];
@@ -213,8 +222,8 @@ const fillMap = (idsMista, isReditelstvi) => {
                         let popup = marker.getPopup();
 
                         let obj = subjekty[ico];
-                        obj.zarizeni.forEach( (zarizeni) => {
-                            zarizeni.mista.forEach( (misto) => {
+                        obj.zarizeni.forEach((zarizeni) => {
+                            zarizeni.mista.forEach((misto) => {
                                 if (misto["id_mista"] == idMista) {
 
                                     popup.setContent(popup.getContent() + `
@@ -231,8 +240,8 @@ const fillMap = (idsMista, isReditelstvi) => {
                     } else {
                         let marker = L.marker([lat, lon]).addTo(map);
                         let obj = subjekty[ico];
-                        obj.zarizeni.forEach( (zarizeni) => {
-                            zarizeni.mista.forEach( (misto) => {
+                        obj.zarizeni.forEach((zarizeni) => {
+                            zarizeni.mista.forEach((misto) => {
                                 if (misto["id_mista"] == idMista) {
 
                                     marker.bindPopup(`
@@ -255,156 +264,6 @@ const fillMap = (idsMista, isReditelstvi) => {
 
 }
 
-const filterMista = (filters) => {
-
-    let idsMista = filters.idsMista;
-    let druhy = filters.druhy;
-    let kraje = filters.kraje;
-    let okresy = filters.okresy;
-
-    if (druhy.length > 0) {
-        let toRemove = [];
-
-        idsMista.forEach( (idMista) => {
-            let ico = mistaIco[idMista];
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                for (let i = 0; i < subjekt.zarizeni.length; i++) {
-                    let zarizeni = subjekt.zarizeni[i];
-
-                    if (!druhy.includes(zarizeni.druh)) {
-                        zarizeni.mista.forEach( (misto) => {
-                            toRemove.push(misto.id_mista);
-                        });
-                    }
-                }
-            }
-        });
-
-        idsMista = idsMista.filter( item => !toRemove.includes(item) );
-    }
-
-    if (kraje.length > 0) {
-        let toRemove = [];
-
-        idsMista.forEach( (idMista) => {
-            let ico = mistaIco[idMista];
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                let reditelstvi = subjekt.reditelstvi;
-                let okres = reditelstvi.okres;
-                let kraj = okres.slice(0, 5);
-
-                if (!kraje.includes(kraj)) {
-                    toRemove.push(idMista);
-                }
-            }
-        });
-
-        idsMista = idsMista.filter( item => !toRemove.includes(item) );
-    }
-
-    if (okresy.length > 0) {
-        let toRemove = [];
-
-        idsMista.forEach( (idMista) => {
-            let ico = mistaIco[idMista];
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                let reditelstvi = subjekt.reditelstvi;
-                let okres = reditelstvi.okres;
-
-                if (!okresy.includes(okres)) {
-                    toRemove.push(idMista);
-                }
-            }
-        });
-
-        idsMista = idsMista.filter( item => !toRemove.includes(item) );
-    }
-
-
-    return idsMista;
-}
-
-const filterReditelstvi = (filters) => {
-
-    let icos = filters.icos;
-    let druhy = filters.druhy;
-    let kraje = filters.kraje;
-    let okresy = filters.okresy;
-
-    if (druhy.length > 0) {
-        let toRemove = [];
-
-        icos.forEach( (ico) => {
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                let found = false;
-                for (let i = 0; i < subjekt.zarizeni.length; i++) {
-                    let zarizeni = subjekt.zarizeni[i];
-                    if (druhy.includes(zarizeni.druh)) {
-                        found = true;
-                        break
-                    }
-                }
-
-                if (!found) {
-                    toRemove.push(ico);
-                }
-            }
-        });
-
-        icos = icos.filter( item => !toRemove.includes(item) );
-    }
-
-    if (kraje.length > 0) {
-        let toRemove = [];
-
-        icos.forEach( (ico) => {
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                let reditelstvi = subjekt.reditelstvi;
-                let okres = reditelstvi.okres;
-                let kraj = okres.slice(0, 5);
-
-                if (!kraje.includes(kraj)) {
-                    toRemove.push(ico);
-                }
-            }
-        });
-
-        icos = icos.filter( item => !toRemove.includes(item) );
-    }
-
-    if (okresy.length > 0) {
-        let toRemove = [];
-
-        icos.forEach( (ico) => {
-            let subjekt = subjekty[ico];
-            if (subjekt !== undefined || subjekt != null) {
-
-                let reditelstvi = subjekt.reditelstvi;
-                let okres = reditelstvi.okres;
-
-                if (!okresy.includes(okres)) {
-                    toRemove.push(ico);
-                }
-            }
-        });
-
-        icos = icos.filter( item => !toRemove.includes(item) );
-    }
-
-
-    return icos;
-}
-
 const fillView = () => {
     const bounds = map.getBounds();
 
@@ -414,15 +273,15 @@ const fillView = () => {
     const nelon = bounds._northEast.lng;
 
 
-    if ( viewTyp == "mista" ) {
+    if (viewTyp == "mista") {
         let viewIdsMista = [];
-        Object.keys(mistaLoc).forEach( (idMista) => {
+        Object.keys(mistaLoc).forEach((idMista) => {
             let geo = mistaLoc[idMista];
             let lat = geo.lat;
             let lon = geo.lon;
 
-            if (lat < nelat && lat > swlat
-                && lon < nelon && lon > swlon) {
+            if (lat < nelat && lat > swlat &&
+                lon < nelon && lon > swlon) {
                 viewIdsMista.push(idMista);
             }
         });
@@ -441,15 +300,15 @@ const fillView = () => {
             clearMarkers();
             fillMap(viewIdsMista, false);
         }
-    } else if ( viewTyp == "reditelstvi" ) {
+    } else if (viewTyp == "reditelstvi") {
         let viewIdsMista = [];
-        Object.keys(reditelstviLoc).forEach( (idMista) => {
+        Object.keys(reditelstviLoc).forEach((idMista) => {
             let geo = reditelstviLoc[idMista];
             let lat = geo.lat;
             let lon = geo.lon;
 
-            if (lat < nelat && lat > swlat
-                && lon < nelon && lon > swlon) {
+            if (lat < nelat && lat > swlat &&
+                lon < nelon && lon > swlon) {
                 viewIdsMista.push(idMista);
             }
         });
@@ -471,13 +330,166 @@ const fillView = () => {
     }
 }
 
+
+// FILTERING
+
+const filterMista = (filters) => {
+
+    let idsMista = filters.idsMista;
+    let druhy = filters.druhy;
+    let kraje = filters.kraje;
+    let okresy = filters.okresy;
+
+    if (druhy.length > 0) {
+        let toRemove = [];
+
+        idsMista.forEach((idMista) => {
+            let ico = mistaIco[idMista];
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                for (let i = 0; i < subjekt.zarizeni.length; i++) {
+                    let zarizeni = subjekt.zarizeni[i];
+
+                    if (!druhy.includes(zarizeni.druh)) {
+                        zarizeni.mista.forEach((misto) => {
+                            toRemove.push(misto.id_mista);
+                        });
+                    }
+                }
+            }
+        });
+
+        idsMista = idsMista.filter(item => !toRemove.includes(item));
+    }
+
+    if (kraje.length > 0) {
+        let toRemove = [];
+
+        idsMista.forEach((idMista) => {
+            let ico = mistaIco[idMista];
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                let reditelstvi = subjekt.reditelstvi;
+                let okres = reditelstvi.okres;
+                let kraj = okres.slice(0, 5);
+
+                if (!kraje.includes(kraj)) {
+                    toRemove.push(idMista);
+                }
+            }
+        });
+
+        idsMista = idsMista.filter(item => !toRemove.includes(item));
+    }
+
+    if (okresy.length > 0) {
+        let toRemove = [];
+
+        idsMista.forEach((idMista) => {
+            let ico = mistaIco[idMista];
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                let reditelstvi = subjekt.reditelstvi;
+                let okres = reditelstvi.okres;
+
+                if (!okresy.includes(okres)) {
+                    toRemove.push(idMista);
+                }
+            }
+        });
+
+        idsMista = idsMista.filter(item => !toRemove.includes(item));
+    }
+
+
+    return idsMista;
+}
+
+const filterReditelstvi = (filters) => {
+
+    let icos = filters.icos;
+    let druhy = filters.druhy;
+    let kraje = filters.kraje;
+    let okresy = filters.okresy;
+
+    if (druhy.length > 0) {
+        let toRemove = [];
+
+        icos.forEach((ico) => {
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                let found = false;
+                for (let i = 0; i < subjekt.zarizeni.length; i++) {
+                    let zarizeni = subjekt.zarizeni[i];
+                    if (druhy.includes(zarizeni.druh)) {
+                        found = true;
+                        break
+                    }
+                }
+
+                if (!found) {
+                    toRemove.push(ico);
+                }
+            }
+        });
+
+        icos = icos.filter(item => !toRemove.includes(item));
+    }
+
+    if (kraje.length > 0) {
+        let toRemove = [];
+
+        icos.forEach((ico) => {
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                let reditelstvi = subjekt.reditelstvi;
+                let okres = reditelstvi.okres;
+                let kraj = okres.slice(0, 5);
+
+                if (!kraje.includes(kraj)) {
+                    toRemove.push(ico);
+                }
+            }
+        });
+
+        icos = icos.filter(item => !toRemove.includes(item));
+    }
+
+    if (okresy.length > 0) {
+        let toRemove = [];
+
+        icos.forEach((ico) => {
+            let subjekt = subjekty[ico];
+            if (subjekt !== undefined || subjekt != null) {
+
+                let reditelstvi = subjekt.reditelstvi;
+                let okres = reditelstvi.okres;
+
+                if (!okresy.includes(okres)) {
+                    toRemove.push(ico);
+                }
+            }
+        });
+
+        icos = icos.filter(item => !toRemove.includes(item));
+    }
+
+
+    return icos;
+}
+
 const filterByDruh = (el) => {
     let druh = el.value;
     console.log(druh, el.checked);
-    if (el.checked){ // Add
+    if (el.checked) { // Add
         filterDruh.push(druh);
     } else { // Remove
-        filterDruh = filterDruh.filter( (x) => x != druh );
+        filterDruh = filterDruh.filter((x) => x != druh);
     }
     console.log(filterDruh);
     fillView();
@@ -486,10 +498,10 @@ const filterByDruh = (el) => {
 const filterByKraj = (el) => {
     let kraj = el.value;
     console.log(kraj, el.checked);
-    if (el.checked){ // Add
+    if (el.checked) { // Add
         filterKraj.push(kraj);
     } else { // Remove
-        filterKraj = filterKraj.filter( (x) => x != kraj );
+        filterKraj = filterKraj.filter((x) => x != kraj);
     }
     console.log(filterKraj);
     fillView();
@@ -498,10 +510,10 @@ const filterByKraj = (el) => {
 const filterByOkres = (el) => {
     let okres = el.value;
     console.log(okres, el.checked);
-    if (el.checked){ // Add
+    if (el.checked) { // Add
         filterOkres.push(okres);
     } else { // Remove
-        filterOkres = filterOkres.filter( (x) => x != okres );
+        filterOkres = filterOkres.filter((x) => x != okres);
     }
     console.log(filterOkres);
     fillView();
@@ -515,10 +527,6 @@ const setViewTyp = (el) => {
     }
 }
 
-const detailView = (ico) => {
-    let subjekt = subjekty[ico];
-}
-
 // INIT
 
 // Set view add tileLayer
@@ -530,12 +538,12 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Get data and fill map
 getData().then((ret) => {
-    fillMap( Object.keys(reditelstviLoc), true );
+    fillMap(Object.keys(reditelstviLoc), true);
 });
 
 // Events
 var viewTimeout;
-map.on('moveend', () => { 
+map.on('moveend', () => {
     if (viewTimeout !== undefined) {
         clearTimeout(viewTimeout);
     }
