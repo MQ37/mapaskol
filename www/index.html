@@ -10,6 +10,16 @@
                 height: 98vh;
             }
 
+            #detail {
+                margin-left: 2em;
+                display: none;
+            }
+
+            .close-btn {
+                position: absolute;
+                right: 1em;
+            }
+
             .flex-container {
                 display: flex;
             }
@@ -569,6 +579,10 @@
 
          </div>
          <div id="map" class="is-8"></div>
+         <div id="detail" class="is-2">
+            <button class="close-btn" onclick="closeDetail();">X</button>
+            <div id="detail-info"></div>
+         </div>
      </div>
 
      <script src="/main.js"></script>
