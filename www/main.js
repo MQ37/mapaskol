@@ -142,9 +142,20 @@ const viewDetail = (ico) => {
     console.log(subjekt);
     let detailElem = document.getElementById("detail");
     let detailInfoElem = document.getElementById("detail-info");
-    detailInfoElem.innerText = `
-        Detail
+    detailInfoElem.innerHTML = `
+        Detail: <br>
     `;
+
+    subjekt.zarizeni.forEach( (zarizeni) => {
+        let content = `<b>${zarizeni.nazev}</b> <br>`;
+
+        zarizeni.obory.forEach( (obor) => {
+            content += `${obor.nazev} <br>`;
+        });
+
+
+        detailInfoElem.innerHTML += content;
+    });
     detailElem.style.display = "block";
 }
 
@@ -230,38 +241,29 @@ const fillMap = (idsMista, isReditelstvi) => {
                 } else {
                     let ico = mistaIco[idMista];
                     let obj = subjekty[ico];
-                    let content = `
-                                    ${obj.ico}<br>
-                                    ${obj.nazev} <br>
-                                    ${idMista} <br>
-                                    ${misto.druh} <br>
-                                    <hr>
-                                    `;
+                    let content;
+                    obj.zarizeni.forEach((zarizeni) => {
+                        zarizeni.mista.forEach((misto) => {
+                            if (misto["id_mista"] == idMista) {
+                                content = `
+                                                ${obj.ico}<br>
+                                                ${obj.nazev} <br>
+                                                ${idMista} <br>
+                                                ${misto.druh} <br>
+                                                <hr>
+                                                `;
+                            }
+                        });
+                    });
                     if ([lat, lon] in locMarkers) {
                         let marker = locMarkers[[lat, lon]];
                         let popup = marker.getPopup();
 
-                        obj.zarizeni.forEach((zarizeni) => {
-                            zarizeni.mista.forEach((misto) => {
-                                if (misto["id_mista"] == idMista) {
-
-                                    popup.setContent(popup.getContent() + content);
-
-                                }
-                            });
-                        });
+                        popup.setContent(popup.getContent() + content);
                     } else {
                         let marker = L.marker([lat, lon]).addTo(map);
 
-                        obj.zarizeni.forEach((zarizeni) => {
-                            zarizeni.mista.forEach((misto) => {
-                                if (misto["id_mista"] == idMista) {
-
-                                    marker.bindPopup(content);
-
-                                }
-                            });
-                        });
+                        marker.bindPopup(content);
                         locMarkers[[lat, lon]] = marker;
                     }
                 }

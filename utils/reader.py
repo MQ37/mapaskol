@@ -85,6 +85,7 @@ def subjekt_info(subjekt):
             "druh": druh,
             "kapacita": kapacita,
             "mista": [],
+            "obory": []
         }
 
         for misto in XPATH_MISTO(zarizeni):
@@ -99,6 +100,17 @@ def subjekt_info(subjekt):
             }
 
             zar_info["mista"].append(misto_info)
+
+        for obor in zarizeni.xpath(".//SkolaOboryVzdelani//SkolaOborVzdelani"):
+            obor_kod, obor_nazev = obor.xpath("./OborKod | ./OborNazev")
+
+            obor_info = {
+                        "kod": obor_kod.text,
+                        "nazev": obor_nazev.text,
+                        }
+
+            zar_info["obory"].append(obor_info)
+
 
         info["zarizeni"].append(zar_info)
 
