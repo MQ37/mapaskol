@@ -146,10 +146,10 @@ const viewDetail = (ico) => {
         Detail: <br>
     `;
 
-    subjekt.zarizeni.forEach( (zarizeni) => {
+    subjekt.zarizeni.forEach((zarizeni) => {
         let content = `<b>${zarizeni.nazev}</b> <br>`;
 
-        zarizeni.obory.forEach( (obor) => {
+        zarizeni.obory.forEach((obor) => {
             content += `${obor.nazev} <br>`;
         });
 
@@ -165,7 +165,7 @@ const closeDetail = () => {
 }
 
 const fillMap = (idsMista, isReditelstvi) => {
-    const clusterSize = 30;
+    const clusterSize = 60;
     console.log("Current count", idsMista.length);
 
     if (idsMista.length > 200) {
@@ -560,5 +560,5 @@ map.on('moveend', () => {
         console.log(map.getBounds());
         console.log(map.getZoom());
         fillView();
-    }, 200);
+    }, 500);
 });
