@@ -102,6 +102,8 @@ OKRESY = {
         "CZ0806": "Ostrava-město",
         }
 
+cache = {}
+
 
 def read_json(filepath):
     if os.path.exists(filepath):
@@ -193,12 +195,17 @@ def main(args):
                     if kraj:
                         adr += ",%s" % kraj
 
-                    time.sleep(1)
-                    geo_loc = geo_lookup(adr)
-                    if not geo_loc:
-                        failed_geo.append(id_mista)
-                        print("Could not find skipping", id_mista)
-                        continue
+                    if adr in cache:
+                        geo_loc = cache[adr]
+                    else:
+                        time.sleep(1)
+                        geo_loc = geo_lookup(adr)
+                        if not geo_loc:
+                            failed_geo.append(id_mista)
+                            print("Could not find skipping", id_mista)
+                            continue
+                        cache[adr] = geo_loc
+
                     print(id_mista, geo_loc)
 
                     geo_obj[id_mista] = geo_loc
