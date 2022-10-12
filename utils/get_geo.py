@@ -121,14 +121,14 @@ def write_json(filepath, obj):
         json.dump(obj, f)
 
 def geo_lookup(adr):
-    r = requests.get("https://us1.locationiq.com/v1/search",
-                    params={
-                        "key": API_TOKEN,
-                        "q": adr,
-                        "countrycodes": ["CZ"],
-                        "format": "json",
-                        })
     try:
+        r = requests.get("https://us1.locationiq.com/v1/search",
+                        params={
+                            "key": API_TOKEN,
+                            "q": adr,
+                            "countrycodes": ["CZ"],
+                            "format": "json",
+                            })
         r.raise_for_status()
     except Exception as e:
         print("API CALL Error - %s | %s" % (r.text, e))
