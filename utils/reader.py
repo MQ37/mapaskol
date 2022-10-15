@@ -14,6 +14,7 @@ XPATH_SUBJEKT_SEARCH = etree.XPath("/ExportDat/PravniSubjekt[ICO = $ico]")
 XPATH_SUBJEKTY_ALL = etree.XPath("/ExportDat/PravniSubjekt")
 XPATH_SUBJEKTY_N = etree.XPath("/ExportDat/PravniSubjekt[position() <= $n]")
 
+
 def read_xml(filepath):
     if os.path.exists(filepath):
         try:
@@ -43,6 +44,7 @@ def print_subjekt(subjekt):
         print("********************")
 
     print("--------------------")
+
 
 def benchmark_subjekt(subjekt):
     ico = subjekt.xpath("./ICO")[0].text
@@ -102,15 +104,18 @@ def subjekt_info(subjekt):
             zar_info["mista"].append(misto_info)
 
         for obor in zarizeni.xpath(".//SkolaOboryVzdelani//SkolaOborVzdelani"):
-            obor_kod, obor_nazev = obor.xpath("./OborKod | ./OborNazev")
+            obor_kod, obor_nazev, obor_forma, obor_delka = obor.xpath(
+                "./OborKod | ./OborNazev | ./FormaVzdelavani | ./DelkaVzdelavani"
+            )
 
             obor_info = {
-                        "kod": obor_kod.text,
-                        "nazev": obor_nazev.text,
-                        }
+                "kod": obor_kod.text,
+                "nazev": obor_nazev.text,
+                "forma": obor_forma.text,
+                "delka": obor_delka.text,
+            }
 
             zar_info["obory"].append(obor_info)
-
 
         info["zarizeni"].append(zar_info)
 

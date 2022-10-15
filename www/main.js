@@ -1,3 +1,13 @@
+// CONSTS
+
+const formaVzdelani = {
+    "10": "Denní",
+    "22": "Dálková",
+    "23": "Večerní",
+    "24": "Distanční",
+    "30": "Kombinovaná",
+};
+
 // GLOBALS
 var map = L.map('map');
 
@@ -138,24 +148,26 @@ const clusterPoints = (lats, lons, n) => {
 // VIEW
 
 const viewDetail = (ico) => {
+    console.log("ICO", ico);
     let subjekt = subjekty[ico];
     console.log(subjekt);
     let detailElem = document.getElementById("detail");
     let detailInfoElem = document.getElementById("detail-info");
-    detailInfoElem.innerHTML = `
-        Detail: <br>
-    `;
+    let content = "";
 
     subjekt.zarizeni.forEach((zarizeni) => {
-        let content = `<b>${zarizeni.nazev}</b> <br>`;
+        content += `<b>${zarizeni.nazev}</b> <br>`;
 
-        zarizeni.obory.forEach((obor) => {
-            content += `${obor.nazev} <br>`;
-        });
-
-
-        detailInfoElem.innerHTML += content;
+        console.log(zarizeni);
+        if (zarizeni.obory.length > 0) {
+            content += "Obory:<br><ul>";
+            zarizeni.obory.forEach((obor) => {
+                content += `<li>${obor.nazev} - ${formaVzdelani[obor.forma]} forma (${parseInt(obor.delka[0], 16)}.${obor.delka[1]} roku)</li>`;
+            });
+            content += "</ul>";
+        }
     });
+    detailInfoElem.innerHTML = content;
     detailElem.style.display = "block";
 }
 
@@ -223,7 +235,7 @@ const fillMap = (idsMista, isReditelstvi) => {
                         ${obj.reditelstvi.adr1} <br>
                         ${obj.reditelstvi.adr2} <br>
                         ${obj.reditelstvi.adr3} <br>
-                        <a onclick="viewDetail(${obj.ico});" style="cursor: pointer";>Detail</a>
+                        <a onclick="viewDetail('${obj.ico}');" style="cursor: pointer";>Detail</a>
                         <hr>
                         `;
                     if ([lat, lon] in locMarkers) {
@@ -268,6 +280,10 @@ const fillMap = (idsMista, isReditelstvi) => {
                     }
                 }
             }
+        });
+        Object.values(locMarkers).forEach((marker) => {
+            let popup = marker.getPopup();
+            popup.setContent("<div style='max-height: 30em; overflow-y: scroll;'>" + popup.getContent() + "<div>");
         });
     }
 
