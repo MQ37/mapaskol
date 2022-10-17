@@ -16,6 +16,9 @@ var reditelstviLoc;
 var mistaLoc;
 var mistaIco = {};
 var subjekty;
+var gCLats = null;
+var gCLons = null;
+var gCSizes = null;
 
 // FILTER GLOBALS
 var viewTyp = "reditelstvi";
@@ -76,74 +79,121 @@ const euclideanDistance = (lat1, lon1, lat2, lon2) => {
         (lon1 - lon2) * (lon1 - lon2))
 };
 
-const clusterPoints = (lats, lons, n) => {
-    let clustersLats = [];
-    let clustersLons = [];
+const clusterPoints = (lats, lons, minDist, maxDist, minSize) => {
+    let centroidLats = [];
+    let centroidLons = [];
+    let clusterSizes = [];
 
     let unclusteredLats = lats
     let unclusteredLons = lons;
 
+    /*
+    for (let i = 0; i < n; i++) {
+        let idx = Math.floor(Math.random() * unclusteredLats.length);
+        let lat = unclusteredLats.splice(idx, 1)[0];
+        let lon = unclusteredLons.splice(idx, 1)[0];
+
+        centroidLats.push(lat);
+        centroidLons.push(lon);
+        clusterSizes.push(0);
+    }
+
+    for (let i = 0; i < unclusteredLats.length; i++) {
+        let lat = unclusteredLats[i];
+        let lon = unclusteredLons[i];
+
+        let minDistance = Infinity;
+        let cIdx = 0;
+        for (let j = 0; j < centroidLats.length; j++) {
+            let clat = centroidLats[j];
+            let clon = centroidLons[j];
+
+            let dist = euclideanDistance(clat, clon, lat, lon);
+            if (dist < minDistance) {
+                minDistance = dist;
+                cIdx = j;
+            }
+        }
+
+        clusterSizes[cIdx] += 1;
+    }
+    */
+
+    let count = 0;
+    let ccount = 0;
+    let bcount = 0
     while (unclusteredLats.length > 0) {
+        count += 1
 
-        let clat = unclusteredLats.pop();
-        let clon = unclusteredLons.pop();
+        colat = parseFloat(unclusteredLats.pop());
+        colon = parseFloat(unclusteredLons.pop());
 
-        // If was last then lone cluster
-        if (unclusteredLats.length <= 1) {
-            clustersLats.push([clat]);
-            clustersLons.push([clon]);
-            break;
-        }
+        let clusterLats = [colat];
+        let clusterLons = [colon];
 
-        let distances = [];
-        for (let i = 0; i < unclusteredLats.length; i++) {
-            let lat = unclusteredLats[i];
-            let lon = unclusteredLons[i];
-            distances.push(euclideanDistance(clat, clon, lat, lon));
-        }
+        let tovisitLats = [colat];
+        let tovisitLons = [colon];
 
-        let clusterLats = [];
-        let clusterLons = [];
-        for (let i = 0; i < n; i++) {
-            if (distances.length < 1)
-                break;
+        while (tovisitLats.length > 0) {
+            ccount += 1;
+            let olat = tovisitLats.pop();
+            let olon = tovisitLons.pop();
 
-            let min = Infinity;
-            let minj = null;
-            for (let j = 0; j < distances.length; j++) {
-                let dist = distances[j];
-                if (dist < min) {
-                    min = dist;
-                    minj = j;
+            let toRemove = [];
+
+            for (let i = 0; i < unclusteredLats.length; i++) {
+                let lat = parseFloat(unclusteredLats[i]);
+                let lon = parseFloat(unclusteredLons[i]);
+
+
+                let dist = euclideanDistance(olat, olon, lat, lon);
+                let odist = euclideanDistance(colat, colon, lat, lon);
+                if (dist < minDist && odist < maxDist) {
+                    clusterLats.push(lat);
+                    clusterLons.push(lon);
+
+                    tovisitLats.push(lat);
+                    tovisitLons.push(lon);
+
+                    toRemove.push(i);
                 }
             }
 
-            distances.splice(minj, 1);
-            let lat = unclusteredLats.splice(minj, 1);
-            let lon = unclusteredLons.splice(minj, 1);
-
-            clusterLats.push(lat);
-            clusterLons.push(lon);
+            toRemove.sort();
+            toRemove.reverse();
+            toRemove.forEach( (i) => {
+                unclusteredLats.splice(i, 1);
+                unclusteredLons.splice(i, 1);
+            });
         }
 
-        let sumLats = 0;
-        let sumLons = 0;
-        for (let i = 0; i < clusterLats.length; i++) {
-            let lat = clusterLats[i];
-            let lon = clusterLons[i];
+        if (clusterLats.length > minSize) {
+            bcount += 1;
+            let sumLats = 0;
+            let sumLons = 0;
+            for (let i = 0; i < clusterLats.length; i++) {
+                let lat = clusterLats[i];
+                let lon = clusterLons[i];
 
-            sumLats += parseFloat(lat);
-            sumLons += parseFloat(lon);
+                sumLats += lat;
+                sumLons += lon;
+            }
+
+            let centroidLat = sumLats / clusterLats.length;
+            let centroidLon = sumLons / clusterLats.length;
+
+            centroidLats.push(centroidLat);
+            centroidLons.push(centroidLon);
+            clusterSizes.push(clusterLats.length);
         }
 
-        let centroidLat = sumLats / clusterLats.length;
-        let centroidLon = sumLons / clusterLats.length;
-
-        clustersLats.push(centroidLat);
-        clustersLons.push(centroidLon);
     }
-    return [clustersLats, clustersLons];
+
+    console.log("COUNT", bcount, count, ccount);
+
+    return [centroidLats, centroidLons, clusterSizes];
 };
+
 
 // VIEW
 
@@ -177,7 +227,9 @@ const closeDetail = () => {
 }
 
 const fillMap = (idsMista, isReditelstvi) => {
-    const clusterSize = 60;
+    const clusterMinSize = 2;
+    const clusterMinDist = 0.075;
+    const clusterMaxDist = 0.125;
     console.log("Current count", idsMista.length);
 
     if (idsMista.length > 200) {
@@ -201,16 +253,31 @@ const fillMap = (idsMista, isReditelstvi) => {
         });
 
 
-        console.log(lats.length);
-        let [cLats, cLons] = clusterPoints(lats, lons, clusterSize);
-        console.log(cLats.length);
+        let [cLats, cLons, cSizes] = [null, null, null];
+        if (gCLats === null) {
+            console.log("Computing...");
+            [cLats, cLons, cSizes] = clusterPoints(lats, lons,
+                clusterMinDist, clusterMaxDist, clusterMinSize);
+            console.log("DONE");
+
+            gCLats = cLats;
+            gCLons = cLons;
+            gCSizes = cSizes;
+        } else {
+            cLats = gCLats;
+            cLons = gCLons;
+            cSizes = gCSizes;
+        }
+
+        console.log("clusters", cLats.length);
 
         for (let i = 0; i < cLats.length; i++) {
             let lat = cLats[i];
             let lon = cLons[i];
+            let size = cSizes[i];
             L.marker([lat, lon], {
                 icon: new L.DivIcon({
-                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${clusterSize}</span>`,
+                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${size}</span>`,
                 })
             }).addTo(map);
         }
@@ -510,37 +577,31 @@ const filterReditelstvi = (filters) => {
 
 const filterByDruh = (el) => {
     let druh = el.value;
-    console.log(druh, el.checked);
     if (el.checked) { // Add
         filterDruh.push(druh);
     } else { // Remove
         filterDruh = filterDruh.filter((x) => x != druh);
     }
-    console.log(filterDruh);
     fillView();
 };
 
 const filterByKraj = (el) => {
     let kraj = el.value;
-    console.log(kraj, el.checked);
     if (el.checked) { // Add
         filterKraj.push(kraj);
     } else { // Remove
         filterKraj = filterKraj.filter((x) => x != kraj);
     }
-    console.log(filterKraj);
     fillView();
 };
 
 const filterByOkres = (el) => {
     let okres = el.value;
-    console.log(okres, el.checked);
     if (el.checked) { // Add
         filterOkres.push(okres);
     } else { // Remove
         filterOkres = filterOkres.filter((x) => x != okres);
     }
-    console.log(filterOkres);
     fillView();
 };
 
@@ -573,7 +634,6 @@ map.on('moveend', () => {
         clearTimeout(viewTimeout);
     }
     viewTimeout = setTimeout(() => {
-        console.log(map.getBounds());
         console.log(map.getZoom());
         fillView();
     }, 500);
