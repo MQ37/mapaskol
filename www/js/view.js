@@ -93,11 +93,15 @@ const fillMap = (idsMista, isReditelstvi) => {
             let lat = cLats[i];
             let lon = cLons[i];
             let size = cSizes[i];
-            L.marker([lat, lon], {
+            let marker = L.marker([lat, lon], {
                 icon: new L.DivIcon({
-                    html: `<span style='font-size: 16px; font-weight: bold; color: red;'>${size}</span>`,
+                    className: "cluster-icon",
+                    html: `<span style='font-size: 16px; font-weight: bold; color: black;'>${size}</span>`,
                 })
             }).addTo(map);
+            console.log("CLUSTER MARKER", marker);
+            marker._icon.style.height = `${16 + 32*size/1000}px`;
+            marker._icon.style.width = `${16 + 32*size/1000}px`;
         }
     } else {
         let locMarkers = {};
