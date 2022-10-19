@@ -16,9 +16,16 @@ var reditelstviLoc;
 var mistaLoc;
 var mistaIco = {};
 var subjekty;
-var gCLats = null;
-var gCLons = null;
-var gCSizes = null;
+
+// Reditelstvi
+var gRCLats = null;
+var gRCLons = null;
+var gRCSizes = null;
+
+// Mista
+var gMCLats = null;
+var gMCLons = null;
+var gMCSizes = null;
 
 // FILTER GLOBALS
 var viewTyp = "reditelstvi";
@@ -79,7 +86,7 @@ const euclideanDistance = (lat1, lon1, lat2, lon2) => {
         (lon1 - lon2) * (lon1 - lon2))
 };
 
-const clusterPoints = (lats, lons, minDist, maxDist, minSize) => {
+const clusterPoints = (lats, lons, maxDist, minSize) => {
     let centroidLats = [];
     let centroidLons = [];
     let clusterSizes = [];
@@ -87,88 +94,42 @@ const clusterPoints = (lats, lons, minDist, maxDist, minSize) => {
     let unclusteredLats = lats
     let unclusteredLons = lons;
 
-    /*
-    for (let i = 0; i < n; i++) {
-        let idx = Math.floor(Math.random() * unclusteredLats.length);
-        let lat = unclusteredLats.splice(idx, 1)[0];
-        let lon = unclusteredLons.splice(idx, 1)[0];
-
-        centroidLats.push(lat);
-        centroidLons.push(lon);
-        clusterSizes.push(0);
-    }
-
-    for (let i = 0; i < unclusteredLats.length; i++) {
-        let lat = unclusteredLats[i];
-        let lon = unclusteredLons[i];
-
-        let minDistance = Infinity;
-        let cIdx = 0;
-        for (let j = 0; j < centroidLats.length; j++) {
-            let clat = centroidLats[j];
-            let clon = centroidLons[j];
-
-            let dist = euclideanDistance(clat, clon, lat, lon);
-            if (dist < minDistance) {
-                minDistance = dist;
-                cIdx = j;
-            }
-        }
-
-        clusterSizes[cIdx] += 1;
-    }
-    */
-
-    let count = 0;
+    let pcount = 0;
     let ccount = 0;
-    let bcount = 0
-    while (unclusteredLats.length > 0) {
-        count += 1
 
+    while (unclusteredLats.length > 0) {
         colat = parseFloat(unclusteredLats.pop());
         colon = parseFloat(unclusteredLons.pop());
 
         let clusterLats = [colat];
         let clusterLons = [colon];
 
-        let tovisitLats = [colat];
-        let tovisitLons = [colon];
 
-        while (tovisitLats.length > 0) {
-            ccount += 1;
-            let olat = tovisitLats.pop();
-            let olon = tovisitLons.pop();
+        let toRemove = [];
 
-            let toRemove = [];
-
-            for (let i = 0; i < unclusteredLats.length; i++) {
-                let lat = parseFloat(unclusteredLats[i]);
-                let lon = parseFloat(unclusteredLons[i]);
+        for (let i = 0; i < unclusteredLats.length; i++) {
+            let lat = parseFloat(unclusteredLats[i]);
+            let lon = parseFloat(unclusteredLons[i]);
 
 
-                let dist = euclideanDistance(olat, olon, lat, lon);
-                let odist = euclideanDistance(colat, colon, lat, lon);
-                if (dist < minDist && odist < maxDist) {
-                    clusterLats.push(lat);
-                    clusterLons.push(lon);
+            let odist = euclideanDistance(colat, colon, lat, lon);
+            if (odist < maxDist) {
+                clusterLats.push(lat);
+                clusterLons.push(lon);
 
-                    tovisitLats.push(lat);
-                    tovisitLons.push(lon);
-
-                    toRemove.push(i);
-                }
+                toRemove.push(i);
             }
-
-            toRemove.sort();
-            toRemove.reverse();
-            toRemove.forEach( (i) => {
-                unclusteredLats.splice(i, 1);
-                unclusteredLons.splice(i, 1);
-            });
         }
 
+        toRemove.reverse();
+        toRemove.forEach( (i) => {
+            unclusteredLats.splice(i, 1);
+            unclusteredLons.splice(i, 1);
+        });
+
+        pcount += 1;
         if (clusterLats.length > minSize) {
-            bcount += 1;
+            ccount += 1;
             let sumLats = 0;
             let sumLons = 0;
             for (let i = 0; i < clusterLats.length; i++) {
@@ -189,7 +150,7 @@ const clusterPoints = (lats, lons, minDist, maxDist, minSize) => {
 
     }
 
-    console.log("COUNT", bcount, count, ccount);
+    console.log("CLUSTER COUNT", pcount, ccount);
 
     return [centroidLats, centroidLons, clusterSizes];
 };
@@ -228,11 +189,11 @@ const closeDetail = () => {
 
 const fillMap = (idsMista, isReditelstvi) => {
     const clusterMinSize = 2;
-    const clusterMinDist = 0.075;
     const clusterMaxDist = 0.125;
     console.log("Current count", idsMista.length);
 
-    if (idsMista.length > 200) {
+    let limit = viewTyp == "reditelstvi" ? 200: 400;
+    if (idsMista.length > limit) {
         let lats = [];
         let lons = [];
         idsMista.forEach((idMista) => {
@@ -254,19 +215,34 @@ const fillMap = (idsMista, isReditelstvi) => {
 
 
         let [cLats, cLons, cSizes] = [null, null, null];
+
+        let gCLats = viewTyp == "reditelstvi" ? gRCLats : gMCLats;
+
         if (gCLats === null) {
             console.log("Computing...");
             [cLats, cLons, cSizes] = clusterPoints(lats, lons,
-                clusterMinDist, clusterMaxDist, clusterMinSize);
+                clusterMaxDist, clusterMinSize);
             console.log("DONE");
 
-            gCLats = cLats;
-            gCLons = cLons;
-            gCSizes = cSizes;
+            if (viewTyp == "reditelstvi") {
+                gRCLats = cLats;
+                gRCLons = cLons;
+                gRCSizes = cSizes;
+            } else {
+                gMCLats = cLats;
+                gMCLons = cLons;
+                gMCSizes = cSizes;
+            }
         } else {
-            cLats = gCLats;
-            cLons = gCLons;
-            cSizes = gCSizes;
+            if (viewTyp == "reditelstvi") {
+                cLats = gRCLats;
+                cLons = gRCLons;
+                cSizes = gRCSizes;
+            } else {
+                cLats = gMCLats;
+                cLons = gMCLons;
+                cSizes = gMCSizes;
+            }
         }
 
         console.log("clusters", cLats.length);
