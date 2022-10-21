@@ -34,7 +34,7 @@ const fillMap = (idsMista, isReditelstvi) => {
     const clusterMaxDist = 0.125;
     console.log("Current count", idsMista.length);
 
-    let limit = viewTyp == "reditelstvi" ? 200: 400;
+    let limit = viewTyp == "reditelstvi" ? 200 : 400;
     if (idsMista.length > limit) {
         let lats = [];
         let lons = [];
@@ -56,38 +56,18 @@ const fillMap = (idsMista, isReditelstvi) => {
         });
 
 
-        let [cLats, cLons, cSizes] = [null, null, null];
+        console.log("Computing...");
+        [cLats, cLons, cSizes] = clusterPoints(lats, lons,
+            clusterMaxDist, clusterMinSize);
+        console.log("DONE");
 
-        let gCLats = viewTyp == "reditelstvi" ? gRCLats : gMCLats;
-
-        if (gCLats === null) {
-            console.log("Computing...");
-            [cLats, cLons, cSizes] = clusterPoints(lats, lons,
-                clusterMaxDist, clusterMinSize);
-            console.log("DONE");
-
-            if (viewTyp == "reditelstvi") {
-                gRCLats = cLats;
-                gRCLons = cLons;
-                gRCSizes = cSizes;
-            } else {
-                gMCLats = cLats;
-                gMCLons = cLons;
-                gMCSizes = cSizes;
-            }
-        } else {
-            if (viewTyp == "reditelstvi") {
-                cLats = gRCLats;
-                cLons = gRCLons;
-                cSizes = gRCSizes;
-            } else {
-                cLats = gMCLats;
-                cLons = gMCLons;
-                cSizes = gMCSizes;
-            }
-        }
 
         console.log("clusters", cLats.length);
+
+        let maxSize = Math.max(...cSizes);
+        const minIconSize = 32;
+        const maxIconSize = 64;
+
 
         for (let i = 0; i < cLats.length; i++) {
             let lat = cLats[i];
@@ -100,8 +80,8 @@ const fillMap = (idsMista, isReditelstvi) => {
                 })
             }).addTo(map);
             console.log("CLUSTER MARKER", marker);
-            marker._icon.style.height = `${16 + 32*size/1000}px`;
-            marker._icon.style.width = `${16 + 32*size/1000}px`;
+            marker._icon.style.height = `${minIconSize + maxIconSize*size/maxSize}px`;
+            marker._icon.style.width = `${minIconSize + maxIconSize*size/maxSize}px`;
         }
     } else {
         let locMarkers = {};

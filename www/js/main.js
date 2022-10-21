@@ -17,16 +17,6 @@ var mistaLoc;
 var mistaIco = {};
 var subjekty;
 
-// Reditelstvi
-var gRCLats = null;
-var gRCLons = null;
-var gRCSizes = null;
-
-// Mista
-var gMCLats = null;
-var gMCLons = null;
-var gMCSizes = null;
-
 // FILTER GLOBALS
 var viewTyp = "reditelstvi";
 var filterDruh = [];
