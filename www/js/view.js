@@ -32,6 +32,7 @@ const closeDetail = () => {
 const fillMap = (idsMista, isReditelstvi) => {
     const clusterMinSize = 2;
     const clusterMaxDist = 0.125;
+    const clusterWalkMinDist = 0.15;
     console.log("Current count", idsMista.length);
 
     let limit = viewTyp == "reditelstvi" ? 200 : 400;
@@ -58,7 +59,7 @@ const fillMap = (idsMista, isReditelstvi) => {
 
         console.log("Computing...");
         [cLats, cLons, cSizes] = clusterPoints(lats, lons,
-            clusterMaxDist, clusterMinSize);
+            clusterWalkMinDist, clusterMaxDist, clusterMinSize);
         console.log("DONE");
 
 
@@ -79,7 +80,6 @@ const fillMap = (idsMista, isReditelstvi) => {
                     html: `<span style='font-size: 16px; font-weight: bold; color: black;'>${size}</span>`,
                 })
             }).addTo(map);
-            console.log("CLUSTER MARKER", marker);
             marker._icon.style.height = `${minIconSize + maxIconSize*size/maxSize}px`;
             marker._icon.style.width = `${minIconSize + maxIconSize*size/maxSize}px`;
         }
