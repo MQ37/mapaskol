@@ -80,8 +80,11 @@ const fillMap = (idsMista, isReditelstvi) => {
                     html: `<span style='font-size: 16px; font-weight: bold; color: black;'>${size}</span>`,
                 })
             }).addTo(map);
-            marker._icon.style.height = `${minIconSize + maxIconSize*size/maxSize}px`;
-            marker._icon.style.width = `${minIconSize + maxIconSize*size/maxSize}px`;
+            let pxsize = minIconSize + maxIconSize*size/maxSize;
+            marker._icon.style.height = `${pxsize}px`;
+            marker._icon.style.width = `${pxsize}px`;
+            marker._icon.style.left = `-${pxsize/4}px`;
+            marker._icon.style.top = `-${pxsize/4}px`;
         }
     } else {
         let locMarkers = {};
