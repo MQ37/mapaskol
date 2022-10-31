@@ -51,3 +51,29 @@ const euclideanDistance = (lat1, lon1, lat2, lon2) => {
         (lon1 - lon2) * (lon1 - lon2))
 };
 
+
+const groupByLoc = (idsMista, isReditelstvi) => {
+    let locs = {};
+
+    idsMista.forEach((idMista) => {
+        let geo;
+        if (isReditelstvi) {
+            geo = reditelstviLoc[idMista];
+        } else {
+            geo = mistaLoc[idMista];
+        }
+
+        if (geo !== undefined) {
+            let lat = geo.lat;
+            let lon = geo.lon;
+
+            if ([lat, lon] in locs) {
+                locs[[lat, lon]].push(idMista);
+            } else {
+                locs[[lat, lon]] = [idMista];
+            }
+        }
+    });
+
+    return locs;
+};

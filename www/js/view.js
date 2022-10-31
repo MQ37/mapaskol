@@ -30,13 +30,18 @@ const closeDetail = () => {
 }
 
 const fillMap = (idsMista, isReditelstvi) => {
-    const clusterMinSize = 2;
-    const clusterMaxDist = 0.125;
-    const clusterWalkMinDist = 0.15;
+    const clusterMinSize = 0;
+    let modifier = (8/map.getZoom()) ** 6;
+    let clusterMaxDist = 0.125 * modifier;
+    let clusterWalkMinDist = 0.15 * modifier;
     console.log("Current count", idsMista.length);
 
-    let limit = viewTyp == "reditelstvi" ? 200 : 400;
-    if (idsMista.length > limit) {
+    let limit = viewTyp == "reditelstvi" ? 50 : 100;
+
+    let grouped = groupByLoc(idsMista, isReditelstvi);
+    let groupedCount = Object.keys(grouped).length;
+    console.log("Current grouped count", groupedCount);
+    if (groupedCount > limit) {
         let lats = [];
         let lons = [];
         idsMista.forEach((idMista) => {
